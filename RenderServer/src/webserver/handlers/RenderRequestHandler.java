@@ -4,11 +4,10 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import raytracer.RayTracer;
 import webserver.exception.NoModelFileException;
+import webserver.exception.QueryMissingException;
 import webserver.parser.QueryParser;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -46,13 +45,22 @@ public class RenderRequestHandler implements HttpHandler {
 
             renderResponse(t, fileName);
 
-        } catch (NoModelFileException e) {
+        } catch (NoModelFileException | QueryMissingException e) {
             t.sendResponseHeaders(400, e.getMessage().length());
             OutputStream os = t.getResponseBody();
             os.write(e.getMessage().getBytes());
             os.close();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stackTrace = sw.toString();
+            logger.warning("Processing request went awry: ");
+            logger.warning(stackTrace);
+            t.sendResponseHeaders(400, stackTrace.length());
+            OutputStream os = t.getResponseBody();
+            os.write(stackTrace.getBytes());
+            os.close();
         }
     }
 
@@ -67,36 +75,44 @@ public class RenderRequestHandler implements HttpHandler {
         os.close();
     }
 
-    private int getSceneColumns() {
-        return Integer.parseInt(queries.get("sc"));
+    private int getSceneColumns() throws QueryMissingException {
+        return Integer.parseInt(getQueryValue("sc"));
     }
 
-    private int getSceneRows() {
-        return Integer.parseInt(queries.get("sr"));
+    private int getSceneRows() throws QueryMissingException {
+        return Integer.parseInt(getQueryValue("sr"));
     }
 
-    private int getWindowColumns() {
-        return Integer.parseInt(queries.get("wc"));
+    private int getWindowColumns() throws QueryMissingException {
+        return Integer.parseInt(getQueryValue("wc"));
     }
 
-    private int getWindowRows() {
-        return Integer.parseInt(queries.get("wr"));
+    private int getWindowRows() throws QueryMissingException {
+        return Integer.parseInt(getQueryValue("wr"));
     }
 
-    private int getColumnOffset() {
-        return Integer.parseInt(queries.get("coff"));
+    private int getColumnOffset() throws QueryMissingException {
+        return Integer.parseInt(getQueryValue("coff"));
     }
 
-    private int getRowOffset() {
-        return Integer.parseInt(queries.get("roff"));
+    private int getRowOffset() throws QueryMissingException {
+        return Integer.parseInt(getQueryValue("roff"));
     }
 
-    private File getModelFile() throws NoModelFileException {
-        File file = new File("/model-files/" + queries.get("f"));
-        logger.info("Looking for: " + "/model-files/" + queries.get("f"));
+    private String getQueryValue(String key) throws QueryMissingException {
+        String value;
+        if ((value = queries.get(key)) != null ) {
+            return value;
+        } else throw new QueryMissingException(key);
+    }
+
+    private File getModelFile() throws NoModelFileException, QueryMissingException {
+        String fileName = getQueryValue("f");
+        File file = new File("/model-files/" + fileName);
+        logger.info("Looking for: " + "/model-files/" + fileName);
         if (!file.exists()) {
             logger.warning("File not found!");
-            throw new NoModelFileException("Cannot find " + queries.get("f"));
+            throw new NoModelFileException(fileName);
         }
         logger.info("Found the file!");
         return file;

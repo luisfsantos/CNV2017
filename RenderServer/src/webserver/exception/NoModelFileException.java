@@ -6,6 +6,6 @@ package webserver.exception;
 public class NoModelFileException extends Exception {
 
     public NoModelFileException(String f) {
-        super(f);
+        super("Cannot find the model file <" + f + ">");
     }
 }

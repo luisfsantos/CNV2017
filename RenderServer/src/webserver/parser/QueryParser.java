@@ -14,13 +14,15 @@ public class QueryParser {
 
     public HashMap<String, String> toMap() {
         HashMap<String, String> parameterValues = new HashMap<>();
-        String[] queries = query.split("&");
-        for (String p : queries) {
-            String[] paramVal = p.split("=");
-            if (paramVal.length <= 1) {
-                parameterValues.put(paramVal[0], "");
-            } else {
-                parameterValues.put(paramVal[0], paramVal[1]);
+        if (query != null) {
+            String[] queries = query.split("&");
+            for (String p : queries) {
+                String[] paramVal = p.split("=");
+                if (paramVal.length <= 1) {
+                    parameterValues.put(paramVal[0], "");
+                } else {
+                    parameterValues.put(paramVal[0], paramVal[1]);
+                }
             }
         }
         return parameterValues;
