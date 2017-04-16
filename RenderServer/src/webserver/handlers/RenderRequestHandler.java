@@ -10,6 +10,7 @@ import webserver.parser.QueryParser;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.logging.Logger;
  */
 public class RenderRequestHandler implements HttpHandler {
     private static final String URL = "localhost:8000";
+    private static final String ModelLocation = "RenderServer/lib/RenderModels/";
     private static Logger logger = Logger.getLogger(RenderRequestHandler.class.getName());
     private HashMap<String, String> queries;
 
@@ -108,8 +110,9 @@ public class RenderRequestHandler implements HttpHandler {
 
     private File getModelFile() throws NoModelFileException, QueryMissingException {
         String fileName = getQueryValue("f");
-        File file = new File("/model-files/" + fileName);
-        logger.info("Looking for: " + "/model-files/" + fileName);
+        File file = new File(ModelLocation + fileName);
+        logger.info("Looking for: " + ModelLocation + fileName);
+        logger.info("I am at:" + Paths.get(".").toAbsolutePath().normalize().toString());
         if (!file.exists()) {
             logger.warning("File not found!");
             throw new NoModelFileException(fileName);
