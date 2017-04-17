@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  */
 public class RenderRequestHandler implements HttpHandler {
     private static final String URL = "localhost:8000";
-    private static final String ModelLocation = "RenderServer/lib/RenderModels/";
+    private static final String ModelLocation = "lib/RenderModels/";
     private static Logger logger = Logger.getLogger(RenderRequestHandler.class.getName());
     private HashMap<String, String> queries;
 
@@ -122,7 +122,7 @@ public class RenderRequestHandler implements HttpHandler {
     }
 
     private File getDumpFile(Date startDate) {
-        SimpleDateFormat formatDate = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.S");
+        SimpleDateFormat formatDate = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss.S");
         String filename = "ImageResult" + formatDate.format(startDate) + ".bmp";
         return new File(filename);
     }
