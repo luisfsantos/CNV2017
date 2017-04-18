@@ -4,15 +4,14 @@ import BIT.highBIT.Routine;
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.logging.*;
 
-/**
- * Created by Catarina on 17/04/2017.
- */
 public class MetricMethodCount {
 
     private static Logger logger = Logger.getLogger(MetricMethodCount.class.getName());
-    private static int m_count = 0;
+//    private static int m_count = 0;
+    private static HashMap<Long, Integer> m_count =  new HashMap<>();
 
     public static void main(String[] args) {
 
@@ -72,10 +71,17 @@ public class MetricMethodCount {
     }
 
     public static synchronized void storeMethodCount(String foo) {
-        logger.info(Thread.currentThread().getName() + " Methods executed: " + m_count);
+        logger.info(Thread.currentThread().getName() + " Methods executed: " +
+                m_count.get(Thread.currentThread().getId()));
     }
 
     public static synchronized void mcount(int incr) {
-        m_count += incr;
+        Long id = Thread.currentThread().getId();
+        Integer prev_mcount = m_count.get(id);
+        if (prev_mcount == null) {
+            m_count.put(id, 0);
+        } else {
+            m_count.put(id, prev_mcount + 1);
+        }
     }
 }
