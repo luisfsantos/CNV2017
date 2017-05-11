@@ -30,7 +30,6 @@ public class Server implements Runnable {
             logger.info("Creating RenderServer at port: " + PORT);
             httpServer.createContext(RENDER_ROUTE, new RenderRequestHandler());
             logger.info("Setup route: " + RENDER_ROUTE + " with handler " + RenderRequestHandler.class.getName());
-            //TODO Remove this is only example:
             httpServer.createContext("/image", new ImageHandler());
             httpServer.createContext("/test", new TestHandler());
             httpServer.setExecutor(executor);

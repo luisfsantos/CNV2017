@@ -61,4 +61,13 @@
         </jar>
     </target>
 
+    <target name="jarNoInstrument" depends="compile">
+        <jar destfile="${jar.name}" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main_class}"/>
+            </manifest>
+            <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
+        </jar>
+    </target>
+
 </project>
