@@ -1,5 +1,6 @@
 package webserver.handlers;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import raytracer.RayTracer;
@@ -44,7 +45,6 @@ public class RenderRequestHandler implements HttpHandler {
             String fileName = outFile.getName();
             tracer.draw(outFile);
             logger.info("File rendered");
-
             renderResponse(t, fileName);
 
         } catch (NoModelFileException | QueryMissingException e) {
@@ -67,14 +67,21 @@ public class RenderRequestHandler implements HttpHandler {
     }
 
     private void renderResponse(HttpExchange t, String fileName) throws IOException {
-        StringBuilder template = new StringBuilder();
-        template.append("The image was generated and you can obtain in at the following url: ");
-        template.append("http://" + URL + "/image?file=" + fileName);
-        String response = template.toString();
-        t.sendResponseHeaders(200, response.length());
-        OutputStream os = t.getResponseBody();
-        os.write(response.getBytes());
-        os.close();
+        Headers headers = t.getResponseHeaders();
+        headers.add("Content-Type", "image/png");
+        File file = new File(fileName);
+        byte[] bytes  = new byte [(int)file.length()];
+        logger.info(file.getAbsolutePath());
+        logger.info("length:" + file.length());
+
+        FileInputStream fileInputStream = new FileInputStream(file);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        bufferedInputStream.read(bytes, 0, bytes.length);
+
+        t.sendResponseHeaders(200, file.length());
+        OutputStream outputStream = t.getResponseBody();
+        outputStream.write(bytes, 0, bytes.length);
+        outputStream.close();
     }
 
     private int getSceneColumns() throws QueryMissingException {

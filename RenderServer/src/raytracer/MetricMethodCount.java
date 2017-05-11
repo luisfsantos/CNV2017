@@ -1,31 +1,16 @@
 import BIT.highBIT.ClassInfo;
 import BIT.highBIT.Routine;
+import metrics.Storage;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.logging.*;
 
 public class MetricMethodCount {
-
-    private static Logger logger = Logger.getLogger(MetricMethodCount.class.getName());
 //    private static int m_count = 0;
     private static HashMap<Long, Integer> m_count =  new HashMap<>();
 
     public static void main(String[] args) {
-
-        LogManager.getLogManager().reset();
-        Logger rootLogger = LogManager.getLogManager().getLogger("");
-        rootLogger.setUseParentHandlers(false);
-        Handler fileHandler = null;
-        try {
-            fileHandler = new FileHandler("metrics.log", true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        fileHandler.setFormatter(new SimpleFormatter());
-        rootLogger.addHandler(fileHandler);
 
         String outputFolder = args[1];
 
@@ -66,13 +51,13 @@ public class MetricMethodCount {
                 routine.addAfter("MetricMethodCount", "storeMethodCount", ci.getClassName());
             }
         }
-//        ci.addAfter("MetricMethodCount", "storeMethodCount", ci.getClassName());
+        //ci.addAfter("MetricMethodCount", "storeMethodCount", ci.getClassName());
         ci.write(destFolder + System.getProperty("file.separator") + filename);
     }
 
     public static synchronized void storeMethodCount(String foo) {
-        logger.info(Thread.currentThread().getName() + " Methods executed: " +
-                m_count.get(Thread.currentThread().getId()));
+        System.out.println("storeMethodCount");
+        Storage.getStore().storeFinalMethodCount(Thread.currentThread().getId(), m_count.get(Thread.currentThread().getId()));
     }
 
     public static synchronized void mcount(int incr) {

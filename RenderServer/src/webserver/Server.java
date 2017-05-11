@@ -3,6 +3,7 @@ package webserver;
 import com.sun.net.httpserver.HttpServer;
 import webserver.handlers.ImageHandler;
 import webserver.handlers.RenderRequestHandler;
+import webserver.handlers.TestHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -29,8 +30,8 @@ public class Server implements Runnable {
             logger.info("Creating RenderServer at port: " + PORT);
             httpServer.createContext(RENDER_ROUTE, new RenderRequestHandler());
             logger.info("Setup route: " + RENDER_ROUTE + " with handler " + RenderRequestHandler.class.getName());
-            //TODO Remove this is only example:
             httpServer.createContext("/image", new ImageHandler());
+            httpServer.createContext("/test", new TestHandler());
             httpServer.setExecutor(executor);
             logger.info("Setup executor as a fixed thread pool with " + THREAD_POOL + " threads");
             httpServer.start();
