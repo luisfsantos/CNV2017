@@ -22,12 +22,15 @@ public class LoggerStore extends MetricsStore {
     }
 
     @Override
-    public void storeIntervalMethodCount(long threadID, long methodCount, int interval) {
-        logger.info("Thread: " + threadID + " has executed " + methodCount + " methods in " + " seconds.");
+    public void updateMethodCount(long threadID, long currentMethodCount) {
+        if (update(currentMethodCount)) {
+            logger.info("Thread: " + threadID + " has executed another " + MIN_METHOD_UPDATE + " methods for request: " + getRequestInformation(threadID));
+        }
+
     }
 
     @Override
     public void storeFinalMethodCount(long threadID, long methodCount) {
-        logger.info("Thread: " + threadID + " has executed " + methodCount + " methods in total.");
+        logger.info("Thread: " + threadID + " has executed " + methodCount + " methods in total for request: " + getRequestInformation(threadID));
     }
 }

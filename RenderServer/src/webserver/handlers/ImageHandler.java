@@ -20,7 +20,7 @@ public class ImageHandler implements HttpHandler {
     @Override public void handle(HttpExchange he) throws IOException {
         Headers headers = he.getResponseHeaders();
         headers.add("Content-Type", "image/png");
-        HashMap<String, String> queries = new QueryParser(he.getRequestURI().getQuery()).toMap();
+        HashMap<String, String> queries = QueryParser.toMap(he.getRequestURI().getQuery());
         File file = new File(queries.get("file"));
         byte[] bytes  = new byte [(int)file.length()];
         System.out.println(file.getAbsolutePath());

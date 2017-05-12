@@ -5,9 +5,9 @@ package metrics;
  */
 public class DynamoStore extends MetricsStore {
 
-    
+
     @Override
-    public void storeIntervalMethodCount(long threadID, long methodCount, int interval) {
+    public void updateMethodCount(long threadID, long currentMethodCount) {
 
     }
 

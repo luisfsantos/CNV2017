@@ -51,13 +51,13 @@ public class MetricMethodCount {
                 routine.addAfter("MetricMethodCount", "storeMethodCount", ci.getClassName());
             }
         }
-        //ci.addAfter("MetricMethodCount", "storeMethodCount", ci.getClassName());
         ci.write(destFolder + System.getProperty("file.separator") + filename);
     }
 
     public static synchronized void storeMethodCount(String foo) {
-        System.out.println("storeMethodCount");
-        Storage.getStore().storeFinalMethodCount(Thread.currentThread().getId(), m_count.get(Thread.currentThread().getId()));
+        Long id = Thread.currentThread().getId();
+        Storage.getStore().storeFinalMethodCount(id, m_count.get(Thread.currentThread().getId()));
+        m_count.put(id, 0);
     }
 
     public static synchronized void mcount(int incr) {
@@ -67,6 +67,7 @@ public class MetricMethodCount {
             m_count.put(id, 0);
         } else {
             m_count.put(id, prev_mcount + 1);
+            Storage.getStore().updateMethodCount(id, prev_mcount+1);
         }
     }
 }

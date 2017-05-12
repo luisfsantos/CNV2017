@@ -1,5 +1,7 @@
 package metrics;
 
+import webserver.parser.Query;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,23 +9,27 @@ import java.util.Map;
  * Created by lads on 11/05/2017.
  */
 public abstract class MetricsStore {
-    Map<Long, String> requestInformation = new HashMap<>();
+    Map<Long, Query> requestInformation = new HashMap<>();
+    protected final long MIN_METHOD_UPDATE = 100000;
 
-    public void setRequestInformation(long threadID, String requestInformation) {
-        this.requestInformation.put(threadID, requestInformation);
+    public void setRequestInformation(long threadID, Query query) {
+        this.requestInformation.put(threadID, query);
     }
 
-    public String getRequestInformation(long threadID) {
+    public Query getRequestInformation(long threadID) {
         return this.requestInformation.get(threadID);
     }
 
+    protected boolean update(long currentMethodCount) {
+        return (currentMethodCount % MIN_METHOD_UPDATE) == 0;
+    }
+
     /**
-     *  Store the number of methods executed in a given interval specified in seconds.
+     *  Update the number of methods currently executed if it is a multiple of @link{MIN_METHOD_UPDATE}
      * @param threadID
-     * @param methodCount
-     * @param interval the interval (in seconds)
+     * @param currentMethodCount
      */
-    public abstract void storeIntervalMethodCount(long threadID, long methodCount, int interval);
+    public abstract void updateMethodCount(long threadID, long currentMethodCount);
 
     /**
      * Store the number of methods executed in total at the end of the request.
