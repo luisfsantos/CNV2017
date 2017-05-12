@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="RenderServer" level="project" />
+    <orderEntry type="library" name="aws-java-sdk-1.11.128-javadoc" level="application" />
   </component>
 </module>

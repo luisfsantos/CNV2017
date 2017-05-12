@@ -17,7 +17,27 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../aws_lib/aws-java-sdk-1.11.128.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../aws_lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/../aws_lib" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="aws-java-sdk-1.11.128-javadoc" level="application" />
   </component>
 </module>

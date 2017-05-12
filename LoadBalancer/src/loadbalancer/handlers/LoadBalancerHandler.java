@@ -64,7 +64,7 @@ public class LoadBalancerHandler implements HttpHandler{
 
     @Override
     public void handle(HttpExchange t) throws IOException {
-        HashMap<String,String> query = new QueryParser(t.getRequestURI().getQuery()).toMap();
+        HashMap<String,String> query = QueryParser.toMap(t.getRequestURI().getQuery());
         queries.put(t, query);
 
         String queryLog = "The query strings were: ";

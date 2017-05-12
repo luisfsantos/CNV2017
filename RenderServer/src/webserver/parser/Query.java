@@ -73,12 +73,32 @@ public class Query {
         return file;
     }
 
+    public int getImageArea() {
+        return windowColumns*windowRows;
+    }
+
+    public int getSceneArea() {
+        return sceneColumns*sceneRows;
+    }
+
+    public String getRequestHash() {
+        StringBuilder hash = new StringBuilder();
+        hash.append("sc").append(sceneColumns)
+                .append("sr").append(sceneRows)
+                .append("wc").append(windowColumns)
+                .append("wr").append(windowRows)
+                .append("co").append(columnOffset)
+                .append("ro").append(rowOffset)
+                .append("f").append(sceneFileName);
+        return hash.toString();
+    }
+
     @Override
     public String toString() {
         return String.format("Scene Columns: %d, " +
                 "Scene Rows: %d, " +
-                "Window Rows: %d, " +
                 "Window Columns: %d, " +
+                "Window Rows: %d, " +
                 "Column Offset: %d, " +
                 "Row Offset: %d, " +
                 "Scene: %s", sceneColumns, sceneRows, windowColumns, windowRows, columnOffset, rowOffset, sceneFileName);
