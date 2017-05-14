@@ -1,44 +1,33 @@
 package loadbalancer.handlers;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-
-
-import java.io.IOException;
-import java.util.*;
-import java.util.logging.Logger;
-
-import loadbalancer.LoadBalancer;
-import webserver.parser.QueryParser;
-
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.RunInstancesResult;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.Datapoint;
-import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
-import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
-import com.amazonaws.services.ec2.model.DescribeAvailabilityZonesResult;
+import com.amazonaws.services.ec2.model.*;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import requests.parser.QueryParser;
+import requests.parser.Request;
+import requests.exception.QueryMissingException;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created by joao on 07-05-2017.
  */
 public class LoadBalancerHandler implements HttpHandler{
     private static Logger logger = Logger.getLogger(LoadBalancerHandler.class.getName());
-    private HashMap<HttpExchange ,HashMap<String, String>> queries;
+    private HashMap<HttpExchange ,Request> queries = new HashMap<>();
+    ArrayList<String> instanceIP = new ArrayList<String>();
     ArrayList<String> instanceIds = new ArrayList<String>();
+    private HashMap<String, Long> currentComplexity = new HashMap<>();
 
     static AmazonEC2 ec2;
 
@@ -49,29 +38,92 @@ public class LoadBalancerHandler implements HttpHandler{
     }
 
     private void init(){
-        AWSCredentials credentials = null;
+        //FIXME
+        instanceIP.add("localhost");
+        //FIXME
+        logger.info("add localhost");
+        AWSCredentialsProviderChain credentialsProvider;
         try {
-            credentials = new ProfileCredentialsProvider().getCredentials();
-        } catch (Exception e) {
-            throw new AmazonClientException(
-                    "Cannot load the credentials from the credential profiles file. " +
-                            "Please make sure that your credentials file is at the correct " +
-                            "location (~/.aws/credentials), and is in valid format.",
-                    e);
+            credentialsProvider = new DefaultAWSCredentialsProviderChain();
         }
-        ec2 = AmazonEC2ClientBuilder.standard().withRegion("us-east-1").withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+        catch (Exception e) {
+            throw new RuntimeException("Error loading credentials", e);
+        }
+        ec2 = AmazonEC2ClientBuilder.standard().withRegion(Regions.US_EAST_1).withCredentials(credentialsProvider).build();
+        logger.info("done creating AmazonEC2Client");
     }
 
     @Override
     public void handle(HttpExchange t) throws IOException {
-        HashMap<String,String> query = QueryParser.toMap(t.getRequestURI().getQuery());
-        queries.put(t, query);
+        try {
+            Request request;
+            logger.info("Parsing Query...");
+            QueryParser queryParser = new QueryParser(t.getRequestURI().getQuery());
+            request = queryParser.getRequest();
+            logger.info("retrieved request " + request);
+            queries.put(t, request);
+            logger.info("put http exchange and request in queries");
+            request.setRequestID(UUID.randomUUID().toString());
+            logger.info("added reqest id: " + request.getRequestID());
+            long complexity  = estimateComplexity(request);
+            logger.info("estimating complexity: " + complexity);
+            byte[] buffer = sendRequest(request, getWorker(complexity));
 
-        String queryLog = "The query strings were: ";
-        for (Map.Entry<String, String> entry : query.entrySet()) {
-            queryLog += " <" + entry.getKey() + "> -> <" + entry.getValue() + ">, ";
+            //TODO Get the file back!!!
+
+            t.sendResponseHeaders(200, buffer.length);
+            Headers headers = t.getResponseHeaders();
+            headers.add("Content-Type", "image/png");
+            OutputStream outputStream = t.getResponseBody();
+            outputStream.write(buffer);
+            outputStream.close();
+
+            //TODO markdown the instance complexity etc
+
+        } catch (QueryMissingException e) {
+            t.sendResponseHeaders(400, e.getMessage().length());
+            OutputStream os = t.getResponseBody();
+            os.write(e.getMessage().getBytes());
+            os.close();
         }
-        logger.info(queryLog);
+
+
+    }
+
+    private String getWorker(long complexity) {
+        //FIXME given the complexity get the best worker for the job
+        return instanceIP.get(0);
+    }
+
+    private byte[] sendRequest(Request request, String ip) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("http://" + ip + ":8080/r.html?" + request.getRequestHash());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            connection.setUseCaches(false);
+            connection.setDoInput(true);
+
+            //Get Response
+            BufferedInputStream is = new BufferedInputStream(connection.getInputStream());
+            logger.info("The reponse has length: " +connection.getContentLength());
+            byte[] buffer = new byte[connection.getContentLength()];
+            is.read(buffer);
+            return buffer;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private long estimateComplexity(Request request) {
+        //TODO estimate the complexity and write to DynamoDB
+        return Long.divideUnsigned(request.getSceneArea()*2L + request.getImageArea()*3L, 2L);
     }
 
     private int getNumberMachinesAlive() {

@@ -19,7 +19,7 @@
     </orderEntry>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../aws_lib/aws-java-sdk-1.11.128.jar!/" />
@@ -38,6 +38,5 @@
         <jarDirectory url="file://$MODULE_DIR$/../aws_lib" recursive="false" />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="aws-java-sdk-1.11.128-javadoc" level="application" />
   </component>
 </module>

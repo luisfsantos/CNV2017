@@ -4,6 +4,7 @@
     <property name="src.dir" value="${basedir}/src" />
     <property name="classes.dir" value="${basedir}/classes" />
     <property name="lib.dir" value="${basedir}/lib" />
+    <property name="aws.dir" value="${basedir}/../aws_lib" />
     <property name="jar.dir" value="${basedir}" />
     <property name="instrument.dir" value="${classes.dir}/instrument" />
     <property name="jar.name" value="${basedir}/RenderServer.jar"/>
@@ -37,9 +38,12 @@
                srcdir="${src.dir}"
                destdir="${classes.dir}">
             <classpath>
-                <dirset dir="${lib.dir}">
-                    <include name="." />
+                <dirset dir="${basedir}">
+                    <include name="${lib.dir}" />
                 </dirset>
+                <fileset dir="${aws.dir}" erroronmissingdir="True">
+                    <include name="*.jar" />
+                </fileset>
             </classpath>
         </javac>
     </target>
@@ -74,6 +78,7 @@
                 <attribute name="Main-Class" value="${main_class}"/>
             </manifest>
             <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
+
         </jar>
     </target>
 

@@ -1,12 +1,10 @@
 package webserver.handlers;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import webserver.parser.QueryParser;
 
-import java.io.*;
-import java.util.HashMap;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Created by lads on 19/04/2017.

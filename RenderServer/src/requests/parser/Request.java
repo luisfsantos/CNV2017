@@ -1,7 +1,6 @@
-package webserver.parser;
+package requests.parser;
 
-import webserver.exception.NoModelFileException;
-import webserver.handlers.RenderRequestHandler;
+import requests.exception.NoModelFileException;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -10,20 +9,24 @@ import java.util.logging.Logger;
 /**
  * Created by lads on 12/05/2017.
  */
-public class Query {
+public class Request {
     private static final String ModelLocation = "lib/RenderModels/";
-    private static Logger logger = Logger.getLogger(Query.class.getName());
+    private static Logger logger = Logger.getLogger(Request.class.getName());
+    String requestID;
+    int sceneColumns;
+    int sceneRows;
+    int windowColumns;
+    int windowRows;
+    int columnOffset;
+    int rowOffset;
+    String sceneFileName;
 
-    final int sceneColumns;
-    final int sceneRows;
-    final int windowColumns;
-    final int windowRows;
-    final int columnOffset;
-    final int rowOffset;
-    final String sceneFileName;
+    public Request () {
 
+    }
 
-    public Query(int sceneColumns, int sceneRows, int windowColumns, int windowRows, int columnOffset, int rowOffset, String file) {
+    public Request(String requestID, int sceneColumns, int sceneRows, int windowColumns, int windowRows, int columnOffset, int rowOffset, String file) {
+        this.requestID = requestID;
         this.sceneColumns = sceneColumns;
         this.sceneRows = sceneRows;
         this.windowColumns = windowColumns;
@@ -61,6 +64,14 @@ public class Query {
         return sceneFileName;
     }
 
+    public String getRequestID() {
+        return requestID;
+    }
+
+    public void setRequestID(String requestID) {
+        this.requestID = requestID;
+    }
+
     public File getSceneFile() throws NoModelFileException {
         File file = new File(ModelLocation + sceneFileName);
         logger.info("Looking for: " + ModelLocation + sceneFileName);
@@ -83,13 +94,14 @@ public class Query {
 
     public String getRequestHash() {
         StringBuilder hash = new StringBuilder();
-        hash.append("sc").append(sceneColumns)
-                .append("sr").append(sceneRows)
-                .append("wc").append(windowColumns)
-                .append("wr").append(windowRows)
-                .append("co").append(columnOffset)
-                .append("ro").append(rowOffset)
-                .append("f").append(sceneFileName);
+        hash.append("sc=").append(sceneColumns)
+                .append("&sr=").append(sceneRows)
+                .append("&wc=").append(windowColumns)
+                .append("&wr=").append(windowRows)
+                .append("&coff=").append(columnOffset)
+                .append("&roff=").append(rowOffset)
+                .append("&f=").append(sceneFileName)
+                .append("&id=").append(requestID);
         return hash.toString();
     }
 

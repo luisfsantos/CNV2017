@@ -1,4 +1,4 @@
-package metrics;
+package requests.metrics;
 
 import java.io.IOException;
 import java.util.logging.*;

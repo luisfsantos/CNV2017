@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 public class LoadBalancer implements Runnable{
 
     private final static Logger logger = Logger.getLogger(LoadBalancer.class.getName());
-    private final static int PORT    = Integer.getInteger("balancer.port", 8080);
+    private final static int PORT    = Integer.getInteger("balancer.port", 8181);
     private final static String RENDER_ROUTE = "/r.html";
     private static LoadBalancer balancer;
     private LoadBalancerHandler handler= new LoadBalancerHandler();
@@ -53,7 +53,7 @@ public class LoadBalancer implements Runnable{
 
     static void shutdown() {
         try {
-            logger.info("Shutting down the RenderServer!");
+            logger.info("Shutting down the LoadBalancer!");
             balancer.httpServer.stop(0);
         } catch (Exception e) {
             logger.warning("There was an exception when shutting down the server, check the stacktrace");

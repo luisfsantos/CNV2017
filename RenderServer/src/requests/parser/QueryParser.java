@@ -1,6 +1,6 @@
-package webserver.parser;
+package requests.parser;
 
-import webserver.exception.QueryMissingException;
+import requests.exception.QueryMissingException;
 
 import java.util.HashMap;
 
@@ -9,7 +9,7 @@ import java.util.HashMap;
  */
 public class QueryParser {
     HashMap<String, String> queryMap;
-    Query query;
+    Request request;
 
     public QueryParser(String query) throws QueryMissingException {
         queryMap = toMap(query);
@@ -17,7 +17,7 @@ public class QueryParser {
     }
 
     private void buildQuery() throws QueryMissingException {
-        query = new Query(getSceneColumns(), getSceneRows(), getWindowColumns(), getWindowRows(), getColumnOffset(), getRowOffset(), getSceneFile());
+        request = new Request(getRequestID(), getSceneColumns(), getSceneRows(), getWindowColumns(), getWindowRows(), getColumnOffset(), getRowOffset(), getSceneFile());
     }
 
     public static HashMap<String, String> toMap(String queryString) {
@@ -36,8 +36,8 @@ public class QueryParser {
         return parameterValues;
     }
 
-    public Query getQuery() {
-        return query;
+    public Request getRequest() {
+        return request;
     }
 
     private String getQueryValue(String key) throws QueryMissingException {
@@ -47,31 +47,39 @@ public class QueryParser {
         } else throw new QueryMissingException(key);
     }
 
-    private int getSceneColumns() throws QueryMissingException {
+    public int getSceneColumns() throws QueryMissingException {
         return Integer.parseInt(getQueryValue("sc"));
     }
 
-    private int getSceneRows() throws QueryMissingException {
+    public int getSceneRows() throws QueryMissingException {
         return Integer.parseInt(getQueryValue("sr"));
     }
 
-    private int getWindowColumns() throws QueryMissingException {
+    public int getWindowColumns() throws QueryMissingException {
         return Integer.parseInt(getQueryValue("wc"));
     }
 
-    private int getWindowRows() throws QueryMissingException {
+    public int getWindowRows() throws QueryMissingException {
         return Integer.parseInt(getQueryValue("wr"));
     }
 
-    private int getColumnOffset() throws QueryMissingException {
+    public int getColumnOffset() throws QueryMissingException {
         return Integer.parseInt(getQueryValue("coff"));
     }
 
-    private int getRowOffset() throws QueryMissingException {
+    public int getRowOffset() throws QueryMissingException {
         return Integer.parseInt(getQueryValue("roff"));
     }
 
-    private String getSceneFile() throws QueryMissingException {
+    public String getSceneFile() throws QueryMissingException {
         return getQueryValue("f");
+    }
+
+    public String getRequestID() {
+        try {
+            return getQueryValue("id");
+        } catch (QueryMissingException e) {
+            return null;
+        }
     }
 }

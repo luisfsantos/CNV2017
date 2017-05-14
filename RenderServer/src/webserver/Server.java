@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 public class Server implements Runnable {
 
     private final static Logger logger = Logger.getLogger(Server.class.getName());
-    private final static int PORT    = Integer.getInteger("render.port", 8000);
+    private final static int PORT    = Integer.getInteger("render.port", 8080);
     private final static int THREAD_POOL = 5;
     private final static String RENDER_ROUTE = "/r.html";
     private static Server renderInstance;

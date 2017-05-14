@@ -1,6 +1,6 @@
-package metrics;
+package requests.metrics;
 
-import webserver.parser.Query;
+import requests.parser.Request;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,14 +9,14 @@ import java.util.Map;
  * Created by lads on 11/05/2017.
  */
 public abstract class MetricsStore {
-    Map<Long, Query> requestInformation = new HashMap<>();
+    Map<Long, Request> requestInformation = new HashMap<>();
     protected final long MIN_METHOD_UPDATE = 100000;
 
-    public void setRequestInformation(long threadID, Query query) {
-        this.requestInformation.put(threadID, query);
+    public void setRequestInformation(long threadID, Request request) {
+        this.requestInformation.put(threadID, request);
     }
 
-    public Query getRequestInformation(long threadID) {
+    public Request getRequestInformation(long threadID) {
         return this.requestInformation.get(threadID);
     }
 
