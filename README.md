@@ -20,14 +20,18 @@ ant
 ```
 
 ## Load Balancer
-This module is the Load Balancer and has the main method to run the balancer (and the AutoScaler):
+This module is the Load Balancer and has the main method to run the balancer (and the AutoScaler).
+
+### Code
 ```
 ant
 java -cp $CP_CNV:LoadBalancer.jar loadbalancer.LoadBalancer
 ```
 
 ## Render Server
-This module is for the worker which do the actual rendering and has the main method to run the server which awaits render requests:
+This module is for the worker which do the actual rendering and has the main method to run the server which awaits render requests.
+
+### Code
 ```
 ant
 java -cp $CP_CNV:RenderServer.jar webserver.Server
