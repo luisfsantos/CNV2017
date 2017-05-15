@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="RenderServer" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -31,5 +30,6 @@
         <jarDirectory url="file:///lib/aws-java-sdk-1.11.128/third-party/lib" recursive="false" />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="MetricsStorage" />
   </component>
 </module>

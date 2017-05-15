@@ -1,0 +1,58 @@
+<project name="MetricsStorage" default="jar" basedir=".">
+    <property name="java.target" value="1.7" />
+    <property name="java.source" value="1.7" />
+    <property name="src.dir" value="${basedir}/src" />
+    <property name="classes.dir" value="${basedir}/classes" />
+    <property name="lib.dir" value="${basedir}/lib" />
+    <property name="aws.dir" value="${basedir}/../aws_lib" />
+    <property name="jar.dir" value="${basedir}" />
+    <property name="jar.name" value="${basedir}/MetricsStorage.jar"/>
+    <property name="RenderServer.dir" value="${basedir}/../RenderServer"/>
+    <property name="LoadBalancer.dir" value="${basedir}/../LoadBalancer"/>
+
+    <target name="init">
+        <mkdir dir="${classes.dir}" />
+    </target>
+
+    <target name="clean">
+        <delete dir="${classes.dir}" />
+        <delete file="${jar.name}" />
+    </target>
+
+    <target name="compile" depends="clean, init">
+        <javac includeantruntime="false"
+               target="${java.target}"
+               source="${java.source}"
+               srcdir="${lib.dir}"
+               destdir="${classes.dir}">
+        </javac>
+        <javac includeantruntime="false"
+               target="${java.target}"
+               source="${java.source}"
+               srcdir="${src.dir}"
+               destdir="${classes.dir}">
+            <classpath>
+                <dirset dir="${basedir}">
+                    <include name="${lib.dir}" />
+                </dirset>
+                <fileset dir="${aws.dir}" erroronmissingdir="True">
+                    <include name="*.jar" />
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="${jar.name}" basedir="${classes.dir}">
+            <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
+        </jar>
+        <copy todir="${RenderServer.dir}/lib" verbose="True" failonerror="True" overwrite="True">
+            <fileset file="${jar.name}"/>
+        </copy>
+        <copy todir="${LoadBalancer.dir}/lib" verbose="True" failonerror="True" overwrite="True">
+            <fileset file="${jar.name}"/>
+        </copy>
+    </target>
+
+
+</project>

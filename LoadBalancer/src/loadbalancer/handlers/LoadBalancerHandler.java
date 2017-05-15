@@ -24,10 +24,10 @@ import java.util.logging.Logger;
  */
 public class LoadBalancerHandler implements HttpHandler{
     private static Logger logger = Logger.getLogger(LoadBalancerHandler.class.getName());
-    private HashMap<HttpExchange ,Request> queries = new HashMap<>();
-    ArrayList<String> instanceIP = new ArrayList<String>();
-    ArrayList<String> instanceIds = new ArrayList<String>();
-    private HashMap<String, Long> currentComplexity = new HashMap<>();
+    private static HashMap<HttpExchange ,Request> queries = new HashMap<>();
+    public static ArrayList<String> instanceIP = new ArrayList<String>();
+    private static ArrayList<String> instanceIds = new ArrayList<String>();
+    private static HashMap<String, Long> currentComplexity = new HashMap<>();
 
     static AmazonEC2 ec2;
 

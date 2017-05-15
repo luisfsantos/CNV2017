@@ -6,15 +6,9 @@
     <property name="lib.dir" value="${basedir}/lib" />
     <property name="aws.dir" value="${basedir}/../aws_lib" />
     <property name="jar.dir" value="${basedir}" />
-    <property name="instrument.dir" value="${classes.dir}/instrument" />
-    <property name="jar.name" value="${basedir}/RenderServer.jar"/>
+    <property name="jar.name" value="${basedir}/LoadBalancer.jar"/>
     <property name="metrics.jar.name" value="${basedir}/../MetricsStorage/MetricsStorage.jar"/>
-    <property name="main_class" value="webserver.Server"/>
-
-    <property name="raytracer.dir" value="raytracer"/>
-    <property name="class.to.instrument" value="RayTracer.class"/>
-
-    <property name="BIT.dir" value="${basedir}/lib/BIT" />
+    <property name="main_class" value="loadbalancer.LoadBalancer"/>
 
     <target name="init">
         <mkdir dir="${classes.dir}" />
@@ -22,7 +16,6 @@
 
     <target name="clean">
         <delete dir="${classes.dir}" />
-        <delete file="${BIT.dir}/**.class" />
         <delete file="${jar.name}" />
     </target>
 
@@ -52,37 +45,12 @@
         </javac>
     </target>
 
-    <target name="instrument" depends="compile">
-        <mkdir dir="${instrument.dir}" />
-        <java classname="MetricMethodCount" failonerror="True">
-            <arg value="${classes.dir}/${raytracer.dir}/${class.to.instrument}" />
-            <arg value="${instrument.dir}" />
-            <classpath>
-                <pathelement location="${classes.dir}" />
-            </classpath>
-        </java>
-        <copy todir="${classes.dir}/${raytracer.dir}" verbose="True" failonerror="True" overwrite="True">
-            <fileset dir="${instrument.dir}"/>
-        </copy>
-        <delete dir="${instrument.dir}" />
-    </target>
-
-    <target name="jar" depends="instrument">
+    <target name="jar" depends="compile">
         <jar destfile="${jar.name}" basedir="${classes.dir}">
             <manifest>
                 <attribute name="Main-Class" value="${main_class}"/>
             </manifest>
             <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
-        </jar>
-    </target>
-
-    <target name="jarNoInstrument" depends="compile">
-        <jar destfile="${jar.name}" basedir="${classes.dir}">
-            <manifest>
-                <attribute name="Main-Class" value="${main_class}"/>
-            </manifest>
-            <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
-
         </jar>
     </target>
 

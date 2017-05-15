@@ -33,4 +33,9 @@ public class LoggerStore extends MetricsStore {
     public void storeFinalMethodCount(long threadID, long methodCount) {
         logger.info("Thread: " + threadID + " has executed " + methodCount + " methods in total for request: " + getRequestInformation(threadID));
     }
+
+    @Override
+    public void storeEstimate(String requestID, long estimate) {
+
+    }
 }

@@ -16,7 +16,7 @@ public class LoadBalancer implements Runnable{
     private final static String RENDER_ROUTE = "/r.html";
     private static LoadBalancer balancer;
     private LoadBalancerHandler handler= new LoadBalancerHandler();
-    //private TestHandler testHandler= new TestHandler();
+    private RegisterWorkerHandler registerWorkerHandler= new RegisterWorkerHandler();
     private HttpServer httpServer;
     private ExecutorService executor;
 
@@ -28,7 +28,7 @@ public class LoadBalancer implements Runnable{
             httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
             logger.info("Creating LoadBalancer at port: " + PORT);
             httpServer.createContext(RENDER_ROUTE, handler);
-            //httpServer.createContext("/test", testHandler);
+            httpServer.createContext("/register", registerWorkerHandler);
             logger.info("Setup route: " + RENDER_ROUTE + " with handler " + LoadBalancerHandler.class.getName());
             httpServer.setExecutor(executor);
             httpServer.start();

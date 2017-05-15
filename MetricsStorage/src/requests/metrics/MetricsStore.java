@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public abstract class MetricsStore {
     Map<Long, Request> requestInformation = new HashMap<>();
-    protected final long MIN_METHOD_UPDATE = 100000;
+    protected final long MIN_METHOD_UPDATE = 1000000L;
 
     public void setRequestInformation(long threadID, Request request) {
         this.requestInformation.put(threadID, request);
@@ -37,5 +37,7 @@ public abstract class MetricsStore {
      * @param methodCount
      */
     public abstract void storeFinalMethodCount(long threadID, long methodCount);
+
+    public abstract void storeEstimate(String requestID, long estimate);
 
 }
