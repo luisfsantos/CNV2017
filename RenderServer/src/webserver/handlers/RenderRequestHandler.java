@@ -28,7 +28,7 @@ public class RenderRequestHandler implements HttpHandler {
             Date startDate = new Date();
             QueryParser queryParser = new QueryParser(t.getRequestURI().getQuery());
             request = queryParser.getRequest();
-            Storage.getStore().setRequestInformation(Thread.currentThread().getId(), request);
+            Storage.getMetricsStore().setRequestInformation(Thread.currentThread().getId(), request);
             logger.info("Request : " + request.toString());
             logger.info("Creating Tracer!");
             RayTracer tracer = new RayTracer(request.getSceneColumns(),

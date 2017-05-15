@@ -38,6 +38,6 @@ public abstract class MetricsStore {
      */
     public abstract void storeFinalMethodCount(long threadID, long methodCount);
 
-    public abstract void storeEstimate(String requestID, long estimate);
+    public abstract void storeEstimate(Request request, long estimate);
 
 }

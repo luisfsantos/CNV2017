@@ -6,13 +6,16 @@ import webserver.handlers.RenderRequestHandler;
 import webserver.handlers.TestHandler;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 public class Server implements Runnable {
-
+    private final static String LOAD_BALANCER = "http://localhost:8181/register?";
     private final static Logger logger = Logger.getLogger(Server.class.getName());
     private final static int PORT    = Integer.getInteger("render.port", 8080);
     private final static int THREAD_POOL = 5;
@@ -72,6 +75,8 @@ public class Server implements Runnable {
     }
 
     public static void main(String[] args) throws Exception {
+        logger.info("Getting machine ip and register at loadbalancer");
+        registerWorker();
         logger.info("Start RenderInstance: ");
         renderInstance = new Server();
         Thread serverThread = new Thread(renderInstance);
@@ -82,6 +87,27 @@ public class Server implements Runnable {
             logger.info("RenderInstance Ended!");
         } catch (Exception e) {
             logger.warning("RenderInstance could not be stopped properly: ");
+            logger.warning(e.getMessage());
+        }
+    }
+
+    private static void registerWorker() {
+        //TODO get machine id and ip
+        try {
+            HttpURLConnection connection;
+            String address = "localhost";
+            String id = "worker1";
+            URL url = null;
+            url = new URL(LOAD_BALANCER + "a=" + address + "&id=" + id);
+            logger.info("connecting to: " + url.toString());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            connection.setUseCaches(false);
+            connection.setDoInput(true);
+            logger.info(connection.getResponseMessage());
+        } catch (Exception e) {
+            logger.warning("Could not register at loadbalancer");
             logger.warning(e.getMessage());
         }
     }

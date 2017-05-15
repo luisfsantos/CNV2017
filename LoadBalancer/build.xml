@@ -1,4 +1,4 @@
-<project name="RenderServer" default="jar" basedir=".">
+<project name="LoadBalancer" default="jar" basedir=".">
     <property name="java.target" value="1.7" />
     <property name="java.source" value="1.7" />
     <property name="src.dir" value="${basedir}/src" />

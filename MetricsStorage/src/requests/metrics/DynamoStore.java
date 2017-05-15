@@ -84,15 +84,20 @@ public class DynamoStore extends MetricsStore {
         RequestMetrics requestMetrics = mapper.load(RequestMetrics.class, request.getRequestID());
         if (requestMetrics == null) {
             requestMetrics = new RequestMetrics(request);
-        } else {
-           requestMetrics.setFinalMethods(methodCount);
         }
+        requestMetrics.setFinalMethods(methodCount);
         mapper.save(requestMetrics);
         //TODO mark request as done...
     }
 
     @Override
-    public void storeEstimate(String requestID, long estimate) {
-
+    public void storeEstimate(Request request, long estimate) {
+        RequestMetrics requestMetrics = mapper.load(RequestMetrics.class, request.getRequestID());
+        if (requestMetrics == null) {
+            requestMetrics = new RequestMetrics(request);
+        }
+        logger.info("Estimate for: " + request.getRequestID() + " is " + estimate);
+        requestMetrics.setEstimatedMethods(estimate);
+        mapper.save(requestMetrics);
     }
 }

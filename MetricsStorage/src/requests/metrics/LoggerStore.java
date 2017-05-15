@@ -1,5 +1,7 @@
 package requests.metrics;
 
+import requests.parser.Request;
+
 import java.io.IOException;
 import java.util.logging.*;
 
@@ -35,7 +37,7 @@ public class LoggerStore extends MetricsStore {
     }
 
     @Override
-    public void storeEstimate(String requestID, long estimate) {
+    public void storeEstimate(Request request, long estimate) {
 
     }
 }

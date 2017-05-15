@@ -9,11 +9,16 @@ import com.amazonaws.services.ec2.model.*;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import loadbalancer.workers.WorkerManager;
+import loadbalancer.workers.WorkerWrapper;
+import requests.exception.QueryMissingException;
 import requests.parser.QueryParser;
 import requests.parser.Request;
-import requests.exception.QueryMissingException;
+import requests.metrics.Storage;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -67,18 +72,15 @@ public class LoadBalancerHandler implements HttpHandler{
             logger.info("added reqest id: " + request.getRequestID());
             long complexity  = estimateComplexity(request);
             logger.info("estimating complexity: " + complexity);
-            byte[] buffer = sendRequest(request, getWorker(complexity));
-
-            //TODO Get the file back!!!
-
+            logger.info("sending request: " + request);
+            byte[] buffer = sendRequest(request, complexity);
+            logger.info("recieved reply");
             t.sendResponseHeaders(200, buffer.length);
             Headers headers = t.getResponseHeaders();
             headers.add("Content-Type", "image/png");
             OutputStream outputStream = t.getResponseBody();
             outputStream.write(buffer);
             outputStream.close();
-
-            //TODO markdown the instance complexity etc
 
         } catch (QueryMissingException e) {
             t.sendResponseHeaders(400, e.getMessage().length());
@@ -87,18 +89,16 @@ public class LoadBalancerHandler implements HttpHandler{
             os.close();
         }
 
-
     }
 
-    private String getWorker(long complexity) {
-        //FIXME given the complexity get the best worker for the job
-        return instanceIP.get(0);
-    }
-
-    private byte[] sendRequest(Request request, String ip) {
+    private byte[] sendRequest(Request request, long complexity) {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL("http://" + ip + ":8080/r.html?" + request.getRequestHash());
+            WorkerWrapper worker = WorkerManager.getInstance().getWorker(complexity);
+            logger.info("load " + worker.getLoad());
+            worker.addRequest(request, complexity);
+
+            URL url = new URL("http://" + worker.getAddress() + ":8080/r.html?" + request.getRequestHash());
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
@@ -110,6 +110,8 @@ public class LoadBalancerHandler implements HttpHandler{
             logger.info("The reponse has length: " +connection.getContentLength());
             byte[] buffer = new byte[connection.getContentLength()];
             is.read(buffer);
+
+            worker.finishRequest(request);
             return buffer;
         } catch (Exception e) {
             e.printStackTrace();
@@ -123,7 +125,9 @@ public class LoadBalancerHandler implements HttpHandler{
 
     private long estimateComplexity(Request request) {
         //TODO estimate the complexity and write to DynamoDB
-        return Long.divideUnsigned(request.getSceneArea()*2L + request.getImageArea()*3L, 2L);
+        long estimate = (request.getSceneArea()*2L + request.getImageArea()*3L) / 2L;
+        Storage.getMetricsStore().storeEstimate(request, estimate);
+        return estimate;
     }
 
     private int getNumberMachinesAlive() {
@@ -141,22 +145,7 @@ public class LoadBalancerHandler implements HttpHandler{
     }
 
     private void launchInstance(){
-        RunInstancesRequest runInstancesRequest =
-                new RunInstancesRequest();
 
-        // TODO: configure to use your AMI, key and security group */
-        runInstancesRequest.withImageId("ami-082a5f1e")
-                .withInstanceType("t2.micro")
-                .withMinCount(1)
-                .withMaxCount(1)
-                .withKeyName("CNV")
-                .withSecurityGroups("CNV-ssh+http")
-        ;
-        RunInstancesResult runInstancesResult =
-                ec2.runInstances(runInstancesRequest);
-        String newInstanceId = runInstancesResult.getReservation().getInstances()
-                .get(0).getInstanceId();
-        instanceIds.add(newInstanceId);
     }
 
     private void terminateInstance(String id){

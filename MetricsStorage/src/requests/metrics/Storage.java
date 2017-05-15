@@ -12,5 +12,5 @@ public class Storage {
      *
      * @return the storage being used for the programme
      */
-    public static synchronized MetricsStore getStore() { return store; }
+    public static synchronized MetricsStore getMetricsStore() { return store; }
 }
