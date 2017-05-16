@@ -130,28 +130,4 @@ public class LoadBalancerHandler implements HttpHandler{
         return estimate;
     }
 
-    private int getNumberMachinesAlive() {
-        int alive = 0;
-        DescribeInstancesResult describeInstancesRequest = ec2.describeInstances();
-        List<Reservation> reservations = describeInstancesRequest.getReservations();
-        Set<Instance> instances = new HashSet<Instance>();
-
-        for (Reservation reservation : reservations) {
-            for( Instance instance : reservation.getInstances()){
-                if(instance.getState().getCode() == 16) alive++;
-            }
-        }
-        return alive++;
-    }
-
-    private void launchInstance(){
-
-    }
-
-    private void terminateInstance(String id){
-        TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
-        termInstanceReq.withInstanceIds(id);
-        ec2.terminateInstances(termInstanceReq);
-    }
-
 }

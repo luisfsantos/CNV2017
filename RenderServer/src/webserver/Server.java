@@ -93,8 +93,9 @@ public class Server implements Runnable {
 
     private static void registerWorker() {
         //TODO get machine id and ip
+        HttpURLConnection connection = null;
         try {
-            HttpURLConnection connection;
+
             String address = "localhost";
             String id = "worker1";
             URL url = null;
@@ -109,6 +110,10 @@ public class Server implements Runnable {
         } catch (Exception e) {
             logger.warning("Could not register at loadbalancer");
             logger.warning(e.getMessage());
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 

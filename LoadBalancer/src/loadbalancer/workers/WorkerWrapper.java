@@ -1,13 +1,12 @@
 package loadbalancer.workers;
 
-import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import requests.parser.Request;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.logging.Logger;
 
 /**
@@ -16,7 +15,7 @@ import java.util.logging.Logger;
 public class WorkerWrapper {
     private final static Logger logger = Logger.getLogger(WorkerWrapper.class.getName());
 
-    private final static long MAX_LOAD = 10000000L; //One hundered million
+    final static long MAX_LOAD = 10000000L; //One hundered million
     String address;
     String workerID;
     long currentLoad = 0;
@@ -28,6 +27,11 @@ public class WorkerWrapper {
         this.address = address;
         this.workerID = workerID;
         status = WorkerStatus.ACTIVE;
+    }
+
+    private WorkerWrapper(String workerID) {
+        this.workerID = workerID;
+        status = WorkerStatus.STARTING;
     }
 
     public synchronized void addRequest(Request request, long estimatedComplexity) {
@@ -59,12 +63,14 @@ public class WorkerWrapper {
         return status.equals(WorkerStatus.STOPPING);
     }
 
-    public synchronized void shutDown() {
+    public synchronized void shutDown(AmazonEC2 client) {
         status = WorkerStatus.STOPPING;
-        //TODO Launch a request to Terminate this instance of worker
+        TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
+        termInstanceReq.withInstanceIds(workerID);
+        client.terminateInstances(termInstanceReq);
     }
 
-    public static String requestNewWorker(AmazonEC2 client) {
+    public static WorkerWrapper requestNewWorker(AmazonEC2 client) {
         //TODO launch a new EC2 intance in AWS
         RunInstancesRequest runInstancesRequest =
                 new RunInstancesRequest();
@@ -81,7 +87,8 @@ public class WorkerWrapper {
                 client.runInstances(runInstancesRequest);
         String newInstanceId = runInstancesResult.getReservation().getInstances()
                 .get(0).getInstanceId();
-        return newInstanceId;
+        logger.info("made a new instance with ID" + newInstanceId);
+        return new WorkerWrapper(newInstanceId);
     }
 
     public String getAddress() {
