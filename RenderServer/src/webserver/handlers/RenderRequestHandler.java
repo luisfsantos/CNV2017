@@ -4,7 +4,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import raytracer.RayTracer;
-import requests.metrics.Storage;
+import requests.Storage;
 import requests.parser.QueryParser;
 import requests.parser.Request;
 import requests.exception.NoModelFileException;

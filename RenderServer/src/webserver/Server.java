@@ -1,6 +1,7 @@
 package webserver;
 
 import com.sun.net.httpserver.HttpServer;
+import properties.PropertiesManager;
 import webserver.handlers.ImageHandler;
 import webserver.handlers.RenderRequestHandler;
 import webserver.handlers.TestHandler;
@@ -15,10 +16,9 @@ import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 public class Server implements Runnable {
-    private final static String LOAD_BALANCER = "http://localhost:8181/register?";
+    private final static String LOAD_BALANCER = PropertiesManager.getInstance().getString("load.balancer");
     private final static Logger logger = Logger.getLogger(Server.class.getName());
-    private final static int PORT    = Integer.getInteger("render.port", 8080);
-    private final static int THREAD_POOL = 5;
+    private final static int PORT    = PropertiesManager.getInstance().getInteger("render.port");
     private final static String RENDER_ROUTE = "/r.html";
     private static Server renderInstance;
     private HttpServer httpServer;
@@ -27,7 +27,7 @@ public class Server implements Runnable {
     @Override
     public void run() {
         try {
-            executor = Executors.newFixedThreadPool(THREAD_POOL);
+            executor = Executors.newCachedThreadPool();
 
             httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
             logger.info("Creating RenderServer at port: " + PORT);
@@ -36,7 +36,7 @@ public class Server implements Runnable {
             httpServer.createContext("/image", new ImageHandler());
             httpServer.createContext("/test", new TestHandler());
             httpServer.setExecutor(executor);
-            logger.info("Setup executor as a fixed thread pool with " + THREAD_POOL + " threads");
+            logger.info("Setup executor as thread pool.");
             httpServer.start();
             logger.info("Started RenderServer!");
 

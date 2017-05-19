@@ -1,16 +1,19 @@
 package requests.parser;
 
+import properties.PropertiesManager;
 import requests.exception.NoModelFileException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
  * Created by lads on 12/05/2017.
  */
 public class Request {
-    private static final String ModelLocation = "lib/RenderModels/";
+    private static final String ModelLocation = PropertiesManager.getInstance().getString("model.location");
     private static Logger logger = Logger.getLogger(Request.class.getName());
     String requestID;
     int sceneColumns;

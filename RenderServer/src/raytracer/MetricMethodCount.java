@@ -1,6 +1,6 @@
 import BIT.highBIT.ClassInfo;
 import BIT.highBIT.Routine;
-import requests.metrics.Storage;
+import requests.Storage;
 
 import java.io.File;
 import java.util.Enumeration;

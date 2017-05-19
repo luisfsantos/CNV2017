@@ -45,6 +45,7 @@ public class DynamoStore extends MetricsStore {
                 //TODO Remove endpoint config in production
                 //.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:8000", Regions.DEFAULT_REGION.getName()))
                 .withCredentials(credentialsProvider)
+                //Comment region for local
                 .withRegion(Regions.US_EAST_1)
                 .build();
         mapper = new DynamoDBMapper(client);
