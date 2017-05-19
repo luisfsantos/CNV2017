@@ -52,14 +52,12 @@ public class WorkerManager {
     }
 
     public void createWorker(long complexity) {
-        for (int i = 0; i < complexity/WorkerWrapper.MAX_LOAD; i++) {
+        if (complexity/WorkerWrapper.MAX_LOAD > 0) {
             addWorker(WorkerWrapper.requestNewWorker(ec2));
         }
-
     }
 
     private void queryForWorkers() {
-        //FIXME look for workers and make workerwrappers if they are of the ami we want
         DescribeInstancesResult describeInstancesRequest = ec2.describeInstances();
         List<Reservation> reservations = describeInstancesRequest.getReservations();
         PropertiesManager props = PropertiesManager.getInstance();
@@ -70,13 +68,15 @@ public class WorkerManager {
                         instance.getInstanceType().equals(props.getString("render.instance.type")) &&
                         instance.getIamInstanceProfile().getArn().equals(props.getString("render.iam.role.arn"))) {
                     workers.add(new WorkerWrapper(instance.getPublicIpAddress(), instance.getInstanceId()));
-                    logger.info(instance.getState().getName() + instance.getImageId() + instance.getInstanceType() + instance.getIamInstanceProfile().getArn());
+                    logger.info("Adding " + instance.getInstanceId() + " " + instance.getState().getName() + " " +
+                            instance.getImageId() + " " +
+                            instance.getInstanceType() + " " +
+                            instance.getIamInstanceProfile().getArn());
                 }
-                //TODO this may come paginated check for issues pertaining to that
             }
         }
         if (workers.isEmpty()) {
-            createWorker(WorkerWrapper.MAX_LOAD);
+            addWorker(WorkerWrapper.requestNewWorker(ec2));
         }
     }
 
@@ -102,11 +102,13 @@ public class WorkerManager {
      * @return return the best worker for a given complexity
      */
     public synchronized WorkerWrapper getWorker(long complexity) {
-        //TODO add this estimated complexity to the actual complexity of the worker wrapper so as to know the current complexity
-        //TODO get a worker based on complexity of the given task
-        WorkerWrapper choosen = workers.get(new Random().nextInt(workers.size()));
+        createWorker(complexity);
+        Collections.sort(workers, WorkerWrapper.COMPARATOR_BY_LOAD);
+        int best = 0;
+        WorkerWrapper choosen = workers.get(best);
         while (choosen.isTerminated())
-            choosen = workers.get(new Random().nextInt(workers.size()));
+            best++;
+            choosen = workers.get(best);
         return choosen;
     }
 
