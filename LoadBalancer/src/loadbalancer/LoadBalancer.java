@@ -2,6 +2,7 @@ package loadbalancer;
 
 import com.sun.net.httpserver.HttpServer;
 import loadbalancer.handlers.*;
+import loadbalancer.workers.WorkerManager;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -33,6 +34,8 @@ public class LoadBalancer implements Runnable{
             httpServer.setExecutor(executor);
             httpServer.start();
             logger.info("Started loadbalancer.LoadBalancer!");
+
+            WorkerManager.getInstance().start();
 
             // Wait here until notified of shutdown.
             synchronized (this) {

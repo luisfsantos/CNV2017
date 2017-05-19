@@ -1,9 +1,11 @@
 package loadbalancer.workers;
 
 import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import properties.PropertiesManager;
 import requests.parser.Request;
 
 import java.util.HashMap;
@@ -23,8 +25,8 @@ public class WorkerWrapper {
     HashMap<String, Request> currentRequests = new HashMap<>();
     HashMap<String, Long> requestEstimatedComplexity = new HashMap<>();
 
-    public WorkerWrapper(String address, String workerID) {
-        this.address = address;
+    public WorkerWrapper(String ip, String workerID) {
+        this.address = ip + ":" + PropertiesManager.getInstance().getString("render.port");
         this.workerID = workerID;
         status = WorkerStatus.ACTIVE;
     }
@@ -76,19 +78,24 @@ public class WorkerWrapper {
                 new RunInstancesRequest();
 
         // TODO: configure to use your AMI, key and security group */
-        runInstancesRequest.withImageId("ami-082a5f1e")
-                .withInstanceType("t2.micro")
+        PropertiesManager props = PropertiesManager.getInstance();
+        runInstancesRequest.withImageId(props.getString("render.image.id"))
+                .withInstanceType(props.getString("render.instance.type"))
                 .withMinCount(1)
                 .withMaxCount(1)
-                .withKeyName("CNV")
-                .withSecurityGroups("CNV-ssh+http")
+                .withKeyName(props.getString("render.key.name"))
+                .withSecurityGroups(props.getString("render.security.group"))
+                .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(props.getString("render.iam.role.name")))
         ;
         RunInstancesResult runInstancesResult =
                 client.runInstances(runInstancesRequest);
         String newInstanceId = runInstancesResult.getReservation().getInstances()
                 .get(0).getInstanceId();
-        logger.info("made a new instance with ID" + newInstanceId);
-        return new WorkerWrapper(newInstanceId);
+        String newInstanceIP = runInstancesResult.getReservation().getInstances()
+                .get(0).getPublicIpAddress();
+        logger.info("made a new instance with ID " + newInstanceId + " and IP " + newInstanceIP);
+
+        return new WorkerWrapper(newInstanceIP, newInstanceId);
     }
 
     public String getAddress() {

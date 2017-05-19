@@ -5,23 +5,24 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.*;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import loadbalancer.workers.WorkerManager;
 import loadbalancer.workers.WorkerWrapper;
+import requests.Storage;
 import requests.exception.QueryMissingException;
 import requests.parser.QueryParser;
 import requests.parser.Request;
-import requests.metrics.Storage;
 
-import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
@@ -98,7 +99,7 @@ public class LoadBalancerHandler implements HttpHandler{
             logger.info("load " + worker.getLoad());
             worker.addRequest(request, complexity);
 
-            URL url = new URL("http://" + worker.getAddress() + ":8080/r.html?" + request.getRequestHash());
+            URL url = new URL("http://" + worker.getAddress() + "/r.html?" + request.getRequestHash());
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
@@ -106,10 +107,10 @@ public class LoadBalancerHandler implements HttpHandler{
             connection.setDoInput(true);
 
             //Get Response
-            BufferedInputStream is = new BufferedInputStream(connection.getInputStream());
+            DataInputStream is = new DataInputStream((connection.getInputStream()));
             logger.info("The reponse has length: " +connection.getContentLength());
             byte[] buffer = new byte[connection.getContentLength()];
-            is.read(buffer);
+            is.readFully(buffer);
 
             worker.finishRequest(request);
             return buffer;

@@ -1,4 +1,5 @@
-package requests.metrics;
+import requests.metrics.DynamoStore;
+import requests.metrics.MetricsStore;
 
 /**
  * Created by lads on 11/05/2017.

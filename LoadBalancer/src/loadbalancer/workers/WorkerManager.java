@@ -5,24 +5,25 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.*;
+import properties.PropertiesManager;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Created by lads on 15/05/2017.
  */
 public class WorkerManager {
+    private final static Logger logger = Logger.getLogger(WorkerManager.class.getName());
+
     private static WorkerPolicy UPSCALE_POLICY = new WorkerPolicy(85, 180);
     private static WorkerPolicy DOWNSCALE_POLICY = new WorkerPolicy(40, 360);
-    static AmazonEC2 ec2;
-    private static WorkerManager instance;
+    static AmazonEC2 ec2 = null;
+    private static WorkerManager instance = new WorkerManager();
     private List<WorkerWrapper> workers = new ArrayList<>();
 
     private WorkerManager(){
-        init();
     }
 
     private void init(){
@@ -38,10 +39,11 @@ public class WorkerManager {
         queryForWorkers();
     }
 
+    public void start() {
+        init();
+    }
+
     public static synchronized WorkerManager getInstance(){
-        if(instance == null){
-            instance = new WorkerManager();
-        }
         return instance;
     }
 
@@ -50,7 +52,7 @@ public class WorkerManager {
     }
 
     public void createWorker(long complexity) {
-        for (int i = 0; i < WorkerWrapper.MAX_LOAD/complexity; i++) {
+        for (int i = 0; i < complexity/WorkerWrapper.MAX_LOAD; i++) {
             addWorker(WorkerWrapper.requestNewWorker(ec2));
         }
 
@@ -60,13 +62,21 @@ public class WorkerManager {
         //FIXME look for workers and make workerwrappers if they are of the ami we want
         DescribeInstancesResult describeInstancesRequest = ec2.describeInstances();
         List<Reservation> reservations = describeInstancesRequest.getReservations();
-        Set<Instance> instances = new HashSet<Instance>();
-
+        PropertiesManager props = PropertiesManager.getInstance();
         for (Reservation reservation : reservations) {
             for( Instance instance : reservation.getInstances()){
-                //TODO get all instances that are using the right ami and are alive and create workers from these,
-                //TODO this is supposed to be an inicial setup of the loadbalancer
+                if (instance.getState().getName().equals(InstanceStateName.Running.toString()) &&
+                        instance.getImageId().equals(props.getString("render.image.id")) &&
+                        instance.getInstanceType().equals(props.getString("render.instance.type")) &&
+                        instance.getIamInstanceProfile().getArn().equals(props.getString("render.iam.role.arn"))) {
+                    workers.add(new WorkerWrapper(instance.getPublicIpAddress(), instance.getInstanceId()));
+                    logger.info(instance.getState().getName() + instance.getImageId() + instance.getInstanceType() + instance.getIamInstanceProfile().getArn());
+                }
+                //TODO this may come paginated check for issues pertaining to that
             }
+        }
+        if (workers.isEmpty()) {
+            createWorker(WorkerWrapper.MAX_LOAD);
         }
     }
 
