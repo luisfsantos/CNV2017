@@ -9,5 +9,5 @@ public abstract class EstimateStore {
 
     public abstract long requestEstimate(Request request);
 
-    public abstract void processEstimates();
+    public abstract void storeEstimate();
 }

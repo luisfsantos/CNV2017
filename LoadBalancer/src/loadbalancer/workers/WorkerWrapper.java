@@ -6,6 +6,7 @@ import properties.PropertiesManager;
 
 import requests.parser.Request;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -21,11 +22,18 @@ public class WorkerWrapper {
     final static int STATUS_CHECK_INTERVAL = PropertiesManager.getInstance().getInteger("status.check.interval.ms");
     String address;
     String workerID;
-    long currentLoad = 0;
+    Long currentLoad = 0L;
     WorkerStatus status;
     HashMap<String, Request> currentRequests = new HashMap<>();
     HashMap<String, Long> requestEstimatedComplexity = new HashMap<>();
     Timer checkStatus = new Timer();
+
+    static final Comparator<WorkerWrapper> COMPARATOR_BY_LOAD = new Comparator<WorkerWrapper>() {
+        @Override
+        public int compare(WorkerWrapper o1, WorkerWrapper o2) {
+            return o1.getLoad().compareTo(o2.getLoad());
+        }
+    };
 
     public WorkerWrapper(String ip, String workerID) {
         setIP(ip);
@@ -50,7 +58,7 @@ public class WorkerWrapper {
      * Gets the estimated load as a percentage
      * @return the current estimated load in terms of percentage
      */
-    public long getLoad() {
+    public Long getLoad() {
         return currentLoad/MAX_LOAD * 100;
     }
 
@@ -133,6 +141,10 @@ public class WorkerWrapper {
         return address;
     }
 
+    public void startDownscale() {
+
+    }
+
     class CheckStatusTask extends TimerTask {
 
         AmazonEC2 client;
@@ -168,4 +180,6 @@ public class WorkerWrapper {
                 //TODO health check
         }
     }
+
+
 }
