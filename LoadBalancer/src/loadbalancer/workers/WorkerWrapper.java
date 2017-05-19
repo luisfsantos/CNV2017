@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 public class WorkerWrapper {
     private final static Logger logger = Logger.getLogger(WorkerWrapper.class.getName());
 
-    final static long MAX_LOAD = 10000000L; //One hundered million
+    public final static long MAX_LOAD = 10000000L; //One hundered million
     final static int STATUS_CHECK_INTERVAL = PropertiesManager.getInstance().getInteger("status.check.interval.ms");
     String address;
     String workerID;
@@ -39,13 +39,12 @@ public class WorkerWrapper {
         setIP(ip);
         this.workerID = workerID;
         status = WorkerStatus.ACTIVE;
-        checkStatus.schedule(new UpdateStatusTask(WorkerManager.ec2, this), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
     }
 
     private WorkerWrapper(String workerID) {
         this.workerID = workerID;
         status = WorkerStatus.STARTING;
-        checkStatus.scheduleAtFixedRate(new CheckStatusTask(WorkerManager.ec2, this), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
+        checkStatus.schedule(new StartUpStatusTask(WorkerManager.ec2, this), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
     }
 
     public synchronized void addRequest(Request request, long estimatedComplexity) {
@@ -77,7 +76,7 @@ public class WorkerWrapper {
         return status.equals(WorkerStatus.STOPPING);
     }
 
-    public synchronized void shutDown(AmazonEC2 client) {
+    private synchronized void shutDown(AmazonEC2 client) {
         status = WorkerStatus.STOPPING;
         TerminateInstancesRequest termInstanceReq = new TerminateInstancesRequest();
         termInstanceReq.withInstanceIds(workerID);
@@ -112,9 +111,14 @@ public class WorkerWrapper {
         address = ip + ":" + PropertiesManager.getInstance().getString("render.port");
     }
 
-    private boolean updateState(AmazonEC2 client){
+    private DescribeInstancesResult describeInstance(AmazonEC2 client) {
         DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest().withInstanceIds(this.workerID);
         DescribeInstancesResult describeInstancesResult = client.describeInstances(describeInstancesRequest);
+        return describeInstancesResult;
+    }
+
+    private boolean updateState(AmazonEC2 client){
+        DescribeInstancesResult describeInstancesResult = describeInstance(client);
         InstanceState state = describeInstancesResult.getReservations().get(0).getInstances().get(0).getState();
         if(state.getName().equals(InstanceStateName.Pending.toString())){
             this.status = WorkerStatus.STARTING;
@@ -133,45 +137,50 @@ public class WorkerWrapper {
         return address;
     }
 
-    public void startDownscale() {
+    public synchronized void startShutDown() {
+        this.status = WorkerStatus.STANDBY;
+        this.checkStatus.schedule(new ShutDownStatusTask(WorkerManager.ec2, this), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
 
     }
 
-    class CheckStatusTask extends TimerTask {
+    class StartUpStatusTask extends TimerTask {
 
         AmazonEC2 client;
         WorkerWrapper worker;
 
-        public CheckStatusTask(AmazonEC2 client, WorkerWrapper worker){
+        public StartUpStatusTask(AmazonEC2 client, WorkerWrapper worker){
             this.client = client;
             this.worker = worker;
         }
 
         public void run() {
             logger.info("Checking if worker active yet: " + worker.workerID);
-            if(worker.status.equals(WorkerStatus.STARTING))
-                if(worker.updateState(client)) {
+            if(worker.status.equals(WorkerStatus.STARTING)){
+                if (worker.updateState(client)) {
                     this.cancel();
-                    worker.checkStatus.schedule(new UpdateStatusTask(this.client, this.worker), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
                 }
+            } else {
+                this.cancel();
+            }
         }
     }
 
-    class UpdateStatusTask extends TimerTask {
-
+    class ShutDownStatusTask extends TimerTask {
         AmazonEC2 client;
         WorkerWrapper worker;
 
-        public UpdateStatusTask(AmazonEC2 client, WorkerWrapper worker){
-            this.client = client;
-            this.worker = worker;
+        public ShutDownStatusTask(AmazonEC2 ec2, WorkerWrapper workerWrapper) {
+            this.client = ec2;
+            this.worker = workerWrapper;
         }
 
+        @Override
         public void run() {
-            this.cancel();
-                //TODO health check
+            if (currentRequests.isEmpty()) {
+                worker.shutDown(client);
+                WorkerManager.getInstance().removeWorker(worker);
+                this.cancel();
+            }
         }
     }
-
-
 }

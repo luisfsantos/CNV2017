@@ -30,6 +30,6 @@
         <jarDirectory url="file:///lib/aws-java-sdk-1.11.128/third-party/lib" recursive="false" />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="MetricsStorage" />
+    <orderEntry type="module" module-name="MetricsStorage" exported="" />
   </component>
 </module>
