@@ -1,4 +1,4 @@
-package webserver.exception;
+package requests.exception;
 
 /**
  * Created by lads on 10-04-2017.

@@ -2,6 +2,8 @@ package loadbalancer;
 
 import com.sun.net.httpserver.HttpServer;
 import loadbalancer.handlers.*;
+import loadbalancer.workers.WorkerManager;
+import loadbalancer.workers.WorkerWrapper;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,11 +14,11 @@ import java.util.logging.Logger;
 public class LoadBalancer implements Runnable{
 
     private final static Logger logger = Logger.getLogger(LoadBalancer.class.getName());
-    private final static int PORT    = Integer.getInteger("balancer.port", 8080);
+    private final static int PORT    = Integer.getInteger("balancer.port", 8181);
     private final static String RENDER_ROUTE = "/r.html";
     private static LoadBalancer balancer;
     private LoadBalancerHandler handler= new LoadBalancerHandler();
-    //private TestHandler testHandler= new TestHandler();
+    private RegisterWorkerHandler registerWorkerHandler= new RegisterWorkerHandler();
     private HttpServer httpServer;
     private ExecutorService executor;
 
@@ -28,11 +30,13 @@ public class LoadBalancer implements Runnable{
             httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
             logger.info("Creating LoadBalancer at port: " + PORT);
             httpServer.createContext(RENDER_ROUTE, handler);
-            //httpServer.createContext("/test", testHandler);
+            httpServer.createContext("/register", registerWorkerHandler);
             logger.info("Setup route: " + RENDER_ROUTE + " with handler " + LoadBalancerHandler.class.getName());
             httpServer.setExecutor(executor);
             httpServer.start();
             logger.info("Started loadbalancer.LoadBalancer!");
+
+            WorkerManager.getInstance().start();
 
             // Wait here until notified of shutdown.
             synchronized (this) {
@@ -53,7 +57,7 @@ public class LoadBalancer implements Runnable{
 
     static void shutdown() {
         try {
-            logger.info("Shutting down the RenderServer!");
+            logger.info("Shutting down the LoadBalancer!");
             balancer.httpServer.stop(0);
         } catch (Exception e) {
             logger.warning("There was an exception when shutting down the server, check the stacktrace");
@@ -74,9 +78,10 @@ public class LoadBalancer implements Runnable{
         Thread serverThread = new Thread(balancer);
         serverThread.start();
         Runtime.getRuntime().addShutdownHook(new OnShutdown());
+        new Shutdown().start();
         try {
             serverThread.join();
-            logger.info("loadbalancer.LoadBalancer Ended!");
+            logger.info("loadbalancer.LoadBalancer Ended (this might have been unexpected)...");
         } catch (Exception e) {
             logger.warning("loadbalancer.LoadBalancer could not be stopped properly: ");
             logger.warning(e.getMessage());
@@ -88,5 +93,18 @@ public class LoadBalancer implements Runnable{
 class OnShutdown extends Thread {
     public void run() {
         LoadBalancer.shutdown();
+    }
+}
+
+class Shutdown extends Thread {
+    public void run() {
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        WorkerManager.getInstance().shutDown();
+        LoadBalancer.shutdown();
+        Runtime.getRuntime().exit(0);
     }
 }

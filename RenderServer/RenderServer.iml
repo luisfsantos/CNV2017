@@ -17,7 +17,31 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="MetricsStorage" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file:///lib/aws-java-sdk-1.11.128/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file:///lib/aws-java-sdk-1.11.128/lib" />
+        </SOURCES>
+        <jarDirectory url="file:///lib/aws-java-sdk-1.11.128/lib" recursive="false" />
+        <jarDirectory url="file:///lib/aws-java-sdk-1.11.128/lib" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file:///lib/aws-java-sdk-1.11.128/third-party/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file:///lib/aws-java-sdk-1.11.128/third-party/lib" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
 </module>

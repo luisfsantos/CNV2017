@@ -1,6 +1,9 @@
 #image files
 *.bmp
 
+#AWS keep all three jars here!!!
+aws_lib/
+
 # Created by .ignore support plugin (hsz.mobi)
 ### Windows template
 # Windows thumbnail cache files

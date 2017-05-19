@@ -3,15 +3,14 @@ package webserver.handlers;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import metrics.Storage;
 import raytracer.RayTracer;
-import webserver.exception.NoModelFileException;
-import webserver.exception.QueryMissingException;
-import webserver.parser.Query;
-import webserver.parser.QueryParser;
+import requests.Storage;
+import requests.parser.QueryParser;
+import requests.parser.Request;
+import requests.exception.NoModelFileException;
+import requests.exception.QueryMissingException;
 
 import java.io.*;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Logger;
@@ -22,24 +21,24 @@ import java.util.logging.Logger;
 public class RenderRequestHandler implements HttpHandler {
     private static final String URL = "localhost:8000";
     private static Logger logger = Logger.getLogger(RenderRequestHandler.class.getName());
-    private Query query;
 
     @Override public void handle(HttpExchange t) throws IOException {
         try {
+            Request request;
             Date startDate = new Date();
             QueryParser queryParser = new QueryParser(t.getRequestURI().getQuery());
-            query = queryParser.getQuery();
-            Storage.getStore().setRequestInformation(Thread.currentThread().getId(), query);
-            logger.info("Request : " + query.toString());
+            request = queryParser.getRequest();
+            Storage.getMetricsStore().setRequestInformation(Thread.currentThread().getId(), request);
+            logger.info("Request : " + request.toString());
             logger.info("Creating Tracer!");
-            RayTracer tracer = new RayTracer(query.getSceneColumns(),
-                    query.getSceneRows(),
-                    query.getWindowColumns(),
-                    query.getWindowRows(),
-                    query.getColumnOffset(),
-                    query.getRowOffset());
+            RayTracer tracer = new RayTracer(request.getSceneColumns(),
+                    request.getSceneRows(),
+                    request.getWindowColumns(),
+                    request.getWindowRows(),
+                    request.getColumnOffset(),
+                    request.getRowOffset());
             logger.info("Reading Scene!");
-            tracer.readScene(query.getSceneFile());
+            tracer.readScene(request.getSceneFile());
             logger.info("Writing to file!");
             File outFile = getDumpFile(startDate);
             String fileName = outFile.getName();

@@ -1,6 +1,6 @@
 import BIT.highBIT.ClassInfo;
 import BIT.highBIT.Routine;
-import metrics.Storage;
+import requests.Storage;
 
 import java.io.File;
 import java.util.Enumeration;
@@ -56,7 +56,7 @@ public class MetricMethodCount {
 
     public static synchronized void storeMethodCount(String foo) {
         Long id = Thread.currentThread().getId();
-        Storage.getStore().storeFinalMethodCount(id, m_count.get(Thread.currentThread().getId()));
+        Storage.getMetricsStore().storeFinalMethodCount(id, m_count.get(Thread.currentThread().getId()));
         m_count.put(id, 0);
     }
 
@@ -67,7 +67,7 @@ public class MetricMethodCount {
             m_count.put(id, 0);
         } else {
             m_count.put(id, prev_mcount + 1);
-            Storage.getStore().updateMethodCount(id, prev_mcount+1);
+            Storage.getMetricsStore().updateMethodCount(id, prev_mcount+1);
         }
     }
 }

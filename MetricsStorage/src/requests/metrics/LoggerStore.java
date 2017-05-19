@@ -1,4 +1,6 @@
-package metrics;
+package requests.metrics;
+
+import requests.parser.Request;
 
 import java.io.IOException;
 import java.util.logging.*;
@@ -32,5 +34,10 @@ public class LoggerStore extends MetricsStore {
     @Override
     public void storeFinalMethodCount(long threadID, long methodCount) {
         logger.info("Thread: " + threadID + " has executed " + methodCount + " methods in total for request: " + getRequestInformation(threadID));
+    }
+
+    @Override
+    public void storeEstimate(Request request, long estimate) {
+
     }
 }
