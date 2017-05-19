@@ -25,9 +25,11 @@ public class RequestEstimate {
     }
 
     public RequestEstimate(Request request, long costPerArea) {
+        this.modelName = request.getSceneFileName();
         this.request = request;
         this.costPerArea = costPerArea;
         init();
+        this.imageTuple = makeImageTuple();
     }
 
     public RequestEstimate(Request request) {
@@ -37,6 +39,9 @@ public class RequestEstimate {
     @DynamoDBHashKey(attributeName = "modelName")
     public String getModelName() {
         return modelName;
+    }
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
 
     @DynamoDBTypeConverted(converter = QueryTypeConverter.class)
@@ -71,7 +76,7 @@ public class RequestEstimate {
 
     @DynamoDBRangeKey(attributeName = "imageTuple")
     public String getImageTuple() {
-        return makeImageTuple();
+        return imageTuple;
     }
 
     @DynamoDBAttribute(attributeName = "imageTuple")
@@ -142,7 +147,7 @@ public class RequestEstimate {
             this.setRatioWRSR(0.0);
         } else {
             this.setRatioWRSR(
-                    request.getWindowRows() / request.getRowOffset()
+                    request.getWindowRows() / request.getSceneRows()
             );
         }
 
@@ -151,9 +156,8 @@ public class RequestEstimate {
             this.setRatioWCSC(0.0);
         } else {
             this.setRatioWCSC(
-                    request.getWindowColumns() / request.getSceneRows()
+                    request.getWindowColumns() / request.getSceneColumns()
             );
         }
     }
-
 }

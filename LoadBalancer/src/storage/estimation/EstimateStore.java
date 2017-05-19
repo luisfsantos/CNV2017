@@ -27,6 +27,10 @@ public class EstimateStore {
     private static final double TOLERANCE = 0.1;
     private static Logger logger = Logger.getLogger(EstimateStore.class.getName());
 
+    public EstimateStore() {
+        init();
+    }
+
     public void init() {
         /*
          * The ProfileCredentialsProvider will return your [default]
@@ -86,8 +90,10 @@ public class EstimateStore {
                                     " and ratioWRSR - :ratio_wrsr <= :tolerance" +
                                     " and ratioWCSC - :ratio_wcsc <= :tolerance" )
                             .withExpressionAttributeValues(values));
-
-            RequestEstimate theChosenOne = estimates.get(0);
+            if (estimates.isEmpty()) {
+                return 6 * request.getImageArea();
+            }
+            RequestEstimate theChosenOne = estimates.get(0); //FIXME
             return theChosenOne.getCostPerArea() * request.getImageArea();
         }
     }

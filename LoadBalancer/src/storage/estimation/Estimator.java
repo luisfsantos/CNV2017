@@ -1,6 +1,7 @@
 package storage.estimation;
 
 import loadbalancer.workers.autoscale.MonitorTask;
+import properties.PropertiesManager;
 import requests.parser.Request;
 
 import java.util.Timer;
@@ -11,9 +12,9 @@ import java.util.Timer;
 public class Estimator implements Runnable {
 
     static Timer estimator = new Timer();
-
+    static int PERIOD = PropertiesManager.getInstance().getInteger("estimate.period.milliseconds");
     @Override
     public void run() {
-        estimator.schedule(new EstimatorTask(), 1000, 1000);
+        estimator.schedule(new EstimatorTask(), PERIOD, PERIOD);
     }
 }
