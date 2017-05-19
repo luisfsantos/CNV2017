@@ -1,5 +1,6 @@
 package requests.metrics;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
 import requests.parser.Request;
 
 import java.io.IOException;
@@ -39,5 +40,15 @@ public class LoggerStore extends MetricsStore {
     @Override
     public void storeEstimate(Request request, long estimate) {
 
+    }
+
+    @Override
+    public PaginatedQueryList<RequestMetrics> getRequestMetricsToProcess() {
+        return null;
+    }
+
+    @Override
+    public void deleteMetric(RequestMetrics request) {
+        logger.info("deleting request!");
     }
 }
