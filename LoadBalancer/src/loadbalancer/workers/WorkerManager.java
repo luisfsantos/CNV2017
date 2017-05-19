@@ -16,9 +16,6 @@ import java.util.logging.Logger;
  */
 public class WorkerManager {
     private final static Logger logger = Logger.getLogger(WorkerManager.class.getName());
-
-    private static WorkerPolicy UPSCALE_POLICY = new WorkerPolicy(85, 180);
-    private static WorkerPolicy DOWNSCALE_POLICY = new WorkerPolicy(40, 360);
     static AmazonEC2 ec2 = null;
     private static WorkerManager instance = new WorkerManager();
     private List<WorkerWrapper> workers = new ArrayList<>();
@@ -49,6 +46,20 @@ public class WorkerManager {
 
     public void addWorker(WorkerWrapper worker) {
         workers.add(worker);
+    }
+
+    public void removeWorker(WorkerWrapper worker) {
+        workers.remove(worker);
+    }
+
+    public Long getAverageLoad() {
+        int numberOfWorkers = 0;
+        int totalLoad = 0;
+        for (WorkerWrapper worker: workers) {
+            numberOfWorkers++;
+            totalLoad += worker.getLoad();
+        }
+        return new Long(totalLoad/numberOfWorkers);
     }
 
     public void createWorker(long complexity) {
@@ -83,7 +94,7 @@ public class WorkerManager {
     public void shutDown() {
         for (WorkerWrapper worker: workers) {
             if (worker.isActive()) {
-                worker.shutDown(ec2);
+                worker.startShutDown();
             }
         }
     }
