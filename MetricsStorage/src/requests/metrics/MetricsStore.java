@@ -1,5 +1,6 @@
 package requests.metrics;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
 import requests.parser.Request;
 
 import java.util.HashMap;
@@ -39,5 +40,9 @@ public abstract class MetricsStore {
     public abstract void storeFinalMethodCount(long threadID, long methodCount);
 
     public abstract void storeEstimate(Request request, long estimate);
+
+    public abstract PaginatedQueryList<RequestMetrics> getRequestMetricsToProcess();
+
+    public abstract void deleteMetric(RequestMetrics request);
 
 }

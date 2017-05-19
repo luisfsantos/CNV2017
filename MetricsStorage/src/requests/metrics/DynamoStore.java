@@ -6,11 +6,16 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import requests.parser.Request;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -100,5 +105,19 @@ public class DynamoStore extends MetricsStore {
         logger.info("Estimate for: " + request.getRequestID() + " is " + estimate);
         requestMetrics.setEstimatedMethods(estimate);
         mapper.save(requestMetrics);
+    }
+
+    @Override
+    public PaginatedQueryList<RequestMetrics> getRequestMetricsToProcess() {
+        Map<String, AttributeValue> values = new HashMap<>();
+        values.put(":zero", new AttributeValue(String.valueOf(0)));
+        return mapper.query(RequestMetrics.class, new DynamoDBQueryExpression<RequestMetrics>()
+                .withKeyConditionExpression("finalMethods > :zero")
+                .withExpressionAttributeValues(values));
+    }
+
+    @Override
+    public void deleteMetric(RequestMetrics request) {
+        mapper.delete(request);
     }
 }
