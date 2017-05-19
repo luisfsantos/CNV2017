@@ -6,6 +6,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
+import loadbalancer.workers.autoscale.AutoScaler;
 import properties.PropertiesManager;
 
 import java.util.*;
@@ -52,18 +53,18 @@ public class WorkerManager {
         workers.remove(worker);
     }
 
-    public Long getAverageLoad() {
-        int numberOfWorkers = 0;
-        int totalLoad = 0;
+    public Double getAverageLoad() {
+        double numberOfWorkers = 0;
+        double totalLoad = 0;
         for (WorkerWrapper worker: workers) {
             numberOfWorkers++;
             totalLoad += worker.getLoad();
         }
-        return new Long(totalLoad/numberOfWorkers);
+        return totalLoad/numberOfWorkers;
     }
 
     public void createWorker(long complexity) {
-        if (complexity/WorkerWrapper.MAX_LOAD > 0) {
+        if (workers.size() < AutoScaler.UPSCALE_POLICY.workers && complexity/WorkerWrapper.MAX_LOAD > 0) {
             addWorker(WorkerWrapper.requestNewWorker(ec2));
         }
     }
@@ -121,6 +122,19 @@ public class WorkerManager {
             best++;
             choosen = workers.get(best);
         return choosen;
+    }
+
+    public void shutDownLeastWorker() {
+        if (workers.size() == AutoScaler.DOWNSCALE_POLICY.workers) {
+            return;
+        }
+        Collections.sort(workers, WorkerWrapper.COMPARATOR_BY_LOAD);
+        int best = 0;
+        WorkerWrapper choosen = workers.get(best);
+        while (!choosen.isActive())
+            best++;
+        choosen = workers.get(best);
+        choosen.startShutDown();
     }
 
 

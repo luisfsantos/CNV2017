@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 import loadbalancer.handlers.*;
 import loadbalancer.workers.WorkerManager;
 import loadbalancer.workers.WorkerWrapper;
+import loadbalancer.workers.autoscale.AutoScaler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -77,10 +78,13 @@ public class LoadBalancer implements Runnable{
         balancer = new LoadBalancer();
         Thread serverThread = new Thread(balancer);
         serverThread.start();
+        Thread autoScalerThread = new Thread(new AutoScaler());
+        autoScalerThread.start();
         Runtime.getRuntime().addShutdownHook(new OnShutdown());
         new Shutdown().start();
         try {
             serverThread.join();
+            autoScalerThread.interrupt();
             logger.info("loadbalancer.LoadBalancer Ended (this might have been unexpected)...");
         } catch (Exception e) {
             logger.warning("loadbalancer.LoadBalancer could not be stopped properly: ");

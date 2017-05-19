@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 public class WorkerWrapper {
     private final static Logger logger = Logger.getLogger(WorkerWrapper.class.getName());
 
-    final static long MAX_LOAD = 10000000L; //One hundered million
+    public final static long MAX_LOAD = 10000000L; //One hundered million
     final static int STATUS_CHECK_INTERVAL = PropertiesManager.getInstance().getInteger("status.check.interval.ms");
     String address;
     String workerID;
