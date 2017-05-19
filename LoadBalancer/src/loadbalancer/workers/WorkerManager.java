@@ -80,6 +80,14 @@ public class WorkerManager {
         }
     }
 
+    public void shutDown() {
+        for (WorkerWrapper worker: workers) {
+            if (worker.isActive()) {
+                worker.shutDown(ec2);
+            }
+        }
+    }
+
     /**
      *
      * @return random @link{WorkerWrapper}
@@ -96,7 +104,10 @@ public class WorkerManager {
     public synchronized WorkerWrapper getWorker(long complexity) {
         //TODO add this estimated complexity to the actual complexity of the worker wrapper so as to know the current complexity
         //TODO get a worker based on complexity of the given task
-        return workers.get(new Random().nextInt(workers.size()));
+        WorkerWrapper choosen = workers.get(new Random().nextInt(workers.size()));
+        while (choosen.isTerminated())
+            choosen = workers.get(new Random().nextInt(workers.size()));
+        return choosen;
     }
 
 

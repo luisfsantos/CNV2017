@@ -3,6 +3,7 @@ package loadbalancer;
 import com.sun.net.httpserver.HttpServer;
 import loadbalancer.handlers.*;
 import loadbalancer.workers.WorkerManager;
+import loadbalancer.workers.WorkerWrapper;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -77,9 +78,10 @@ public class LoadBalancer implements Runnable{
         Thread serverThread = new Thread(balancer);
         serverThread.start();
         Runtime.getRuntime().addShutdownHook(new OnShutdown());
+        new Shutdown().start();
         try {
             serverThread.join();
-            logger.info("loadbalancer.LoadBalancer Ended!");
+            logger.info("loadbalancer.LoadBalancer Ended (this might have been unexpected)...");
         } catch (Exception e) {
             logger.warning("loadbalancer.LoadBalancer could not be stopped properly: ");
             logger.warning(e.getMessage());
@@ -91,5 +93,18 @@ public class LoadBalancer implements Runnable{
 class OnShutdown extends Thread {
     public void run() {
         LoadBalancer.shutdown();
+    }
+}
+
+class Shutdown extends Thread {
+    public void run() {
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        WorkerManager.getInstance().shutDown();
+        LoadBalancer.shutdown();
+        Runtime.getRuntime().exit(0);
     }
 }

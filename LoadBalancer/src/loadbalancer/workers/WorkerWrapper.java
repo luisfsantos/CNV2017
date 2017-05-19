@@ -18,6 +18,7 @@ public class WorkerWrapper {
     private final static Logger logger = Logger.getLogger(WorkerWrapper.class.getName());
 
     final static long MAX_LOAD = 10000000L; //One hundered million
+    final static int STATUS_CHECK_INTERVAL = PropertiesManager.getInstance().getInteger("status.check.interval.ms");
     String address;
     String workerID;
     long currentLoad = 0;
@@ -27,16 +28,16 @@ public class WorkerWrapper {
     Timer checkStatus = new Timer();
 
     public WorkerWrapper(String ip, String workerID) {
-        this.address = ip + ":" + PropertiesManager.getInstance().getString("render.port");
+        setIP(ip);
         this.workerID = workerID;
         status = WorkerStatus.ACTIVE;
-        checkStatus.schedule(new UpdateStatusTask(WorkerManager.ec2, this), 60 * 1000);
+        checkStatus.schedule(new UpdateStatusTask(WorkerManager.ec2, this), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
     }
 
     private WorkerWrapper(String workerID) {
         this.workerID = workerID;
         status = WorkerStatus.STARTING;
-        checkStatus.schedule(new CheckStatusTask(WorkerManager.ec2, this), 60 * 1000);
+        checkStatus.scheduleAtFixedRate(new CheckStatusTask(WorkerManager.ec2, this), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
     }
 
     public synchronized void addRequest(Request request, long estimatedComplexity) {
@@ -94,11 +95,13 @@ public class WorkerWrapper {
                 client.runInstances(runInstancesRequest);
         String newInstanceId = runInstancesResult.getReservation().getInstances()
                 .get(0).getInstanceId();
-        String newInstanceIP = runInstancesResult.getReservation().getInstances()
-                .get(0).getPublicIpAddress();
-        logger.info("made a new instance with ID " + newInstanceId + " and IP " + newInstanceIP);
+        logger.info("made a new instance with ID " + newInstanceId);
 
-        return new WorkerWrapper(newInstanceIP, newInstanceId);
+        return new WorkerWrapper(newInstanceId);
+    }
+
+    public void setIP(String ip) {
+        address = ip + ":" + PropertiesManager.getInstance().getString("render.port");
     }
 
     private boolean updateState(AmazonEC2 client){
@@ -110,7 +113,8 @@ public class WorkerWrapper {
             return false;
         }
         else if(state.getName().equals(InstanceStateName.Running.toString())){
-            if (address == null) this.address = describeInstancesResult.getReservations().get(0).getInstances().get(0).getPublicIpAddress();
+            setIP(describeInstancesResult.getReservations().get(0).getInstances().get(0).getPublicIpAddress());
+            logger.info("Instance " + this.workerID + " has started and has address" + this.address);
             this.status = WorkerStatus.STARTED;
             return true;
         }
@@ -132,10 +136,11 @@ public class WorkerWrapper {
         }
 
         public void run() {
+            logger.info("Checking if worker active yet: " + worker.workerID);
             if(worker.status.equals(WorkerStatus.STARTING))
-                if(worker.updateState(client)){
+                if(worker.updateState(client)) {
                     this.cancel();
-                    worker.checkStatus.schedule(new UpdateStatusTask(this.client, this.worker), 60 * 1000);
+                    worker.checkStatus.schedule(new UpdateStatusTask(this.client, this.worker), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
                 }
         }
     }
@@ -151,6 +156,7 @@ public class WorkerWrapper {
         }
 
         public void run() {
+            this.cancel();
                 //TODO health check
         }
     }
