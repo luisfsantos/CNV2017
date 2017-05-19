@@ -29,7 +29,7 @@ public class WorkerWrapper {
         this.address = address;
         this.workerID = workerID;
         status = WorkerStatus.ACTIVE;
-        checkStatus.schedule(new CheckStatusTask(), 60 * 1000);
+        checkStatus.schedule(new CheckStatusTask(client, this), 60 * 1000);
     }
 
     private WorkerWrapper(String workerID, AmazonEC2 client) {
