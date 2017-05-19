@@ -1,12 +1,12 @@
 package loadbalancer.workers;
 
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.RunInstancesResult;
-import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.ec2.model.*;
 import requests.parser.Request;
 
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 
 /**
@@ -23,15 +23,19 @@ public class WorkerWrapper {
     HashMap<String, Request> currentRequests = new HashMap<>();
     HashMap<String, Long> requestEstimatedComplexity = new HashMap<>();
 
+    Timer checkStatus = new Timer();
+
     public WorkerWrapper(String address, String workerID) {
         this.address = address;
         this.workerID = workerID;
         status = WorkerStatus.ACTIVE;
+        checkStatus.schedule(new CheckStatusTask(), 60 * 1000);
     }
 
-    private WorkerWrapper(String workerID) {
+    private WorkerWrapper(String workerID, AmazonEC2 client) {
         this.workerID = workerID;
         status = WorkerStatus.STARTING;
+        checkStatus.schedule(new CheckStatusTask(client, this), 60 * 1000);
     }
 
     public synchronized void addRequest(Request request, long estimatedComplexity) {
@@ -88,10 +92,60 @@ public class WorkerWrapper {
         String newInstanceId = runInstancesResult.getReservation().getInstances()
                 .get(0).getInstanceId();
         logger.info("made a new instance with ID" + newInstanceId);
-        return new WorkerWrapper(newInstanceId);
+        return new WorkerWrapper(newInstanceId, client);
+    }
+
+    private boolean updateState(AmazonEC2 client){
+        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest().withInstanceIds(this.workerID);
+        DescribeInstancesResult describeInstancesResult = client.describeInstances(describeInstancesRequest);
+        InstanceState state = describeInstancesResult.getReservations().get(0).getInstances().get(0).getState();
+        if(state.getName().equals(InstanceStateName.Pending.toString())){
+            this.status = WorkerStatus.STARTING;
+            return false;
+        }
+        else if(state.getName().equals(InstanceStateName.Running.toString())){
+            if (address == null) this.address = describeInstancesResult.getReservations().get(0).getInstances().get(0).getPublicIpAddress();
+            this.status = WorkerStatus.STARTED;
+            return true;
+        }
+
     }
 
     public String getAddress() {
         return address;
+    }
+
+    class CheckStatusTask extends TimerTask {
+
+        AmazonEC2 client;
+        WorkerWrapper worker;
+
+        public CheckStatusTask(AmazonEC2 client, WorkerWrapper worker){
+            this.client = client;
+            this.worker = worker;
+        }
+
+        public void run() {
+            if(worker.status.equals(WorkerStatus.STARTING))
+                if(worker.updateState(client)){
+                    this.cancel();
+                    worker.checkStatus.schedule(new UpdateStatusTask(this.client, this.worker), 60 * 1000);
+                }
+        }
+    }
+
+    class UpdateStatusTask extends TimerTask {
+
+        AmazonEC2 client;
+        WorkerWrapper worker;
+
+        public UpdateStatusTask(AmazonEC2 client, WorkerWrapper worker){
+            this.client = client;
+            this.worker = worker;
+        }
+
+        public void run() {
+                //TODO health check
+        }
     }
 }
