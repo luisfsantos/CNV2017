@@ -28,6 +28,10 @@ public class RequestEstimate {
         this.request = request;
     }
 
+    public RequestEstimate(Request request) {
+        this(request, 0);
+    }
+
     @DynamoDBHashKey(attributeName = "modelName")
     public String getModelName() {
         return modelName;
