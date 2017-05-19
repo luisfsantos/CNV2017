@@ -19,9 +19,12 @@ public class WorkerManager {
 
     private static WorkerPolicy UPSCALE_POLICY = new WorkerPolicy(85, 180);
     private static WorkerPolicy DOWNSCALE_POLICY = new WorkerPolicy(40, 360);
+    final static int STATUS_CHECK_INTERVAL = PropertiesManager.getInstance().getInteger("status.check.interval.ms");
     static AmazonEC2 ec2 = null;
     private static WorkerManager instance = new WorkerManager();
     private List<WorkerWrapper> workers = new ArrayList<>();
+
+    Timer checkWorkers;
 
     private WorkerManager(){
     }
@@ -41,6 +44,8 @@ public class WorkerManager {
 
     public void start() {
         init();
+        checkWorkers = new Timer();
+        checkWorkers.scheduleAtFixedRate(new CheckStatus(ec2, workers), STATUS_CHECK_INTERVAL, STATUS_CHECK_INTERVAL);
     }
 
     public static synchronized WorkerManager getInstance(){
@@ -110,5 +115,23 @@ public class WorkerManager {
         return choosen;
     }
 
+    class CheckStatus extends TimerTask {
+
+        private AmazonEC2 client;
+        private List<WorkerWrapper> workers;
+
+        public CheckStatus(AmazonEC2 client, List<WorkerWrapper> workers){
+            this.client = client;
+            this.workers = workers;
+        }
+
+        @Override
+        public void run() {
+            for(WorkerWrapper w : workers){
+                if(w.isActive() || w.isStarted() || w.isStarting());
+                else w.shutDown(client);
+            }
+        }
+    }
 
 }

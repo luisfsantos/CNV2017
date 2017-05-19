@@ -65,6 +65,14 @@ public class WorkerWrapper {
         return status.equals(WorkerStatus.ACTIVE);
     }
 
+    public boolean isStarted() {
+        return status.equals(WorkerStatus.STARTED);
+    }
+
+    public boolean isStarting() {
+        return status.equals(WorkerStatus.STARTING);
+    }
+
     public boolean isTerminated() {
         return status.equals(WorkerStatus.STOPPING);
     }
