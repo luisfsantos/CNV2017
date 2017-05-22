@@ -78,7 +78,7 @@ public class EstimateStore {
         RequestEstimate estimate = new RequestEstimate(request);
         RequestEstimate someEstimate = mapper.load(RequestEstimate.class, estimate.getModelName(), estimate.getImageTuple());
         if (someEstimate != null) {
-            return someEstimate.getCostPerArea() * request.getImageArea();
+            return (long) someEstimate.getCostPerArea() * request.getImageArea();
         } else {
 
             Map<String, AttributeValue> values = new HashMap<>();
@@ -114,7 +114,7 @@ public class EstimateStore {
                     return 6 * request.getImageArea();
                 }
                 RequestEstimate theChosenOne = estimates.get(0); //FIXME
-                return theChosenOne.getCostPerArea() * request.getImageArea();
+                return (long)theChosenOne.getCostPerArea() * request.getImageArea();
             } catch (Exception e) {
                 logger.warning(e.getMessage());
                 e.printStackTrace();
