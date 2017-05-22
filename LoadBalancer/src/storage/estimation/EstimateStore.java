@@ -26,9 +26,17 @@ public class EstimateStore {
     DynamoDBMapper mapper;
     private static final double TOLERANCE = 0.1;
     private static Logger logger = Logger.getLogger(EstimateStore.class.getName());
+    private static EstimateStore instance = null;
 
-    public EstimateStore() {
+    private EstimateStore() {
         init();
+    }
+
+    public static synchronized EstimateStore getStore() {
+        if (instance == null) {
+            instance = new EstimateStore();
+        }
+        return instance;
     }
 
     public void init() {
@@ -55,7 +63,7 @@ public class EstimateStore {
         mapper = new DynamoDBMapper(client);
         CreateTableRequest req = mapper.generateCreateTableRequest(RequestEstimate.class);
         // Table provision throughput is still required since it cannot be specified in your POJO
-        req.setProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
+        req.setProvisionedThroughput(new ProvisionedThroughput(5L, 5L));
         // Fire off the CreateTableRequest using the low-level client
         TableUtils.createTableIfNotExists(client, req);
         try {
@@ -75,26 +83,44 @@ public class EstimateStore {
 
             Map<String, AttributeValue> values = new HashMap<>();
             values.put(":model_name", new AttributeValue(estimate.getModelName()));
-            values.put(":ratio_wrroff", new AttributeValue(String.valueOf(estimate.getRatioWRROFF())));
-            values.put(":ratio_wccoff", new AttributeValue(String.valueOf(estimate.getRatioWCCOFF())));
-            values.put(":ratio_wrsr", new AttributeValue(String.valueOf(estimate.getRatioWRSR())));
-            values.put(":ratio_wcsc", new AttributeValue(String.valueOf(estimate.getRatioWCSC())));
-            values.put(":tolerance", new AttributeValue(String.valueOf(TOLERANCE)));
 
-            PaginatedQueryList<RequestEstimate> estimates = mapper.query(RequestEstimate.class,
-                    new DynamoDBQueryExpression<RequestEstimate>()
-                            .withKeyConditionExpression(
-                                    "modelName = :model_name" +
-                                    " and ratioWRROFF - :ratio_wrroff <= :tolerance" +
-                                    " and ratioWCCOFF - :ratio_wccoff <= :tolerance" +
-                                    " and ratioWRSR - :ratio_wrsr <= :tolerance" +
-                                    " and ratioWCSC - :ratio_wcsc <= :tolerance" )
-                            .withExpressionAttributeValues(values));
-            if (estimates.isEmpty()) {
+            values.put(":ratio_wrroff_low", new AttributeValue().withN(String.valueOf(estimate.getRatioWRROFF()-TOLERANCE)));
+            values.put(":ratio_wrroff_high", new AttributeValue().withN(String.valueOf(estimate.getRatioWRROFF()+TOLERANCE)));
+
+            values.put(":ratio_wccoff_low", new AttributeValue().withN(String.valueOf(estimate.getRatioWCCOFF()-TOLERANCE)));
+            values.put(":ratio_wccoff_high", new AttributeValue().withN(String.valueOf(estimate.getRatioWCCOFF()+TOLERANCE)));
+
+            values.put(":ratio_wrsr_low", new AttributeValue().withN(String.valueOf(estimate.getRatioWRSR()-TOLERANCE)));
+            values.put(":ratio_wrsr_high", new AttributeValue().withN(String.valueOf(estimate.getRatioWRSR()+TOLERANCE)));
+
+            values.put(":ratio_wcsc_low", new AttributeValue().withN(String.valueOf(estimate.getRatioWCSC()-TOLERANCE)));
+            values.put(":ratio_wcsc_high", new AttributeValue().withN(String.valueOf(estimate.getRatioWCSC()+TOLERANCE)));
+
+            logger.info("Checking for similar past queries.");
+            try {
+                PaginatedQueryList<RequestEstimate> estimates = mapper.query(RequestEstimate.class,
+                        new DynamoDBQueryExpression<RequestEstimate>()
+                                .withKeyConditionExpression(
+                                        "modelName = :model_name")
+                                .withFilterExpression(
+                                        "ratioWRROFF between :ratio_wrroff_low and :ratio_wrroff_high" +
+                                    " and ratioWCCOFF between :ratio_wccoff_low and :ratio_wccoff_high" +
+                                    " and ratioWRSR between :ratio_wrsr_low and :ratio_wrsr_high" +
+                                    " and ratioWCSC between :ratio_wcsc_low and :ratio_wcsc_high")
+                                .withExpressionAttributeValues(values));
+                logger.info("Got the queries back.");
+                if (estimates == null || estimates.isEmpty()) {
+                    logger.info("There are no estimates for this request: " + request);
+                    return 6 * request.getImageArea();
+                }
+                RequestEstimate theChosenOne = estimates.get(0); //FIXME
+                return theChosenOne.getCostPerArea() * request.getImageArea();
+            } catch (Exception e) {
+                logger.warning(e.getMessage());
+                e.printStackTrace();
                 return 6 * request.getImageArea();
             }
-            RequestEstimate theChosenOne = estimates.get(0); //FIXME
-            return theChosenOne.getCostPerArea() * request.getImageArea();
+
         }
     }
 

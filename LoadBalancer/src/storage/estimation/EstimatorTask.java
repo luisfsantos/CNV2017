@@ -17,11 +17,9 @@ import java.util.logging.Logger;
  */
 public class EstimatorTask extends TimerTask {
     private static Logger logger = Logger.getLogger(EstimateStore.class.getName());
-    EstimateStore store;
     double acceptableAmount = 0.1;
 
     public EstimatorTask() {
-        this.store = new EstimateStore();
     }
 
     @Override
@@ -54,7 +52,7 @@ public class EstimatorTask extends TimerTask {
             double real = metric.getFinalMethods();
             double ratio = guess / real;
             if (ratio >= 1+acceptableAmount || ratio <= 1-acceptableAmount) {
-                store.storeEstimate(transformRequest(metric));
+                EstimateStore.getStore().storeEstimate(transformRequest(metric));
             }
             Storage.getMetricsStore().deleteMetric(metric);
 
