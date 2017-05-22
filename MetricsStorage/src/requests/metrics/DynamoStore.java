@@ -5,9 +5,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
-import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
@@ -108,11 +106,11 @@ public class DynamoStore extends MetricsStore {
     }
 
     @Override
-    public PaginatedQueryList<RequestMetrics> getRequestMetricsToProcess() {
+    public PaginatedScanList<RequestMetrics> getRequestMetricsToProcess() {
         Map<String, AttributeValue> values = new HashMap<>();
-        values.put(":zero", new AttributeValue(String.valueOf(0)));
-        return mapper.query(RequestMetrics.class, new DynamoDBQueryExpression<RequestMetrics>()
-                .withKeyConditionExpression("finalMethods > :zero")
+        values.put(":zero", new AttributeValue().withN(String.valueOf(0)));
+        return mapper.scan(RequestMetrics.class, new DynamoDBScanExpression()
+                .withFilterExpression("finalMethods > :zero")
                 .withExpressionAttributeValues(values));
     }
 
