@@ -10,8 +10,8 @@ import java.util.*;
  */
 public class AutoScaler implements Runnable{
     static PropertiesManager props = PropertiesManager.getInstance();
-    public static WorkerPolicy UPSCALE_POLICY = new WorkerPolicy(props.getInteger("autoscale.upscale.load"), props.getInteger("autoscale.upscale.seconds.over.load"), 10);
-    public static WorkerPolicy DOWNSCALE_POLICY = new WorkerPolicy(props.getInteger("autoscale.downscale.load"), props.getInteger("autoscale.downscale.seconds.below.load"), 1);
+    public static WorkerPolicy UPSCALE_POLICY = new WorkerPolicy(props.getInteger("autoscale.upscale.load"), props.getInteger("autoscale.upscale.seconds.over.load"), props.getInteger("autoscale.max.workers"));
+    public static WorkerPolicy DOWNSCALE_POLICY = new WorkerPolicy(props.getInteger("autoscale.downscale.load"), props.getInteger("autoscale.downscale.seconds.below.load"), props.getInteger("autoscale.min.workers"));
     static Timer monitor = new Timer();
     static ArrayList<Double> load = new ArrayList<>();
     static final int mesurePeriod = 5000; //in milliseconds
