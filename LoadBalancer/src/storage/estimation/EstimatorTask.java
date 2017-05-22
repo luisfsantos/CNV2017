@@ -1,6 +1,7 @@
 package storage.estimation;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
 import requests.Storage;
 import requests.exception.QueryMissingException;
 import requests.metrics.RequestMetrics;
@@ -9,16 +10,16 @@ import requests.parser.Request;
 
 import java.util.Iterator;
 import java.util.TimerTask;
+import java.util.logging.Logger;
 
 /**
  * Created by lads on 19/05/2017.
  */
 public class EstimatorTask extends TimerTask {
-    EstimateStore store;
+    private static Logger logger = Logger.getLogger(EstimateStore.class.getName());
     double acceptableAmount = 0.1;
 
     public EstimatorTask() {
-        this.store = new EstimateStore();
     }
 
     @Override
@@ -40,16 +41,18 @@ public class EstimatorTask extends TimerTask {
         } catch (QueryMissingException e) {
             e.printStackTrace();
         }*/
-        PaginatedQueryList<RequestMetrics> metricsToWorkOn = Storage.getMetricsStore().getRequestMetricsToProcess();
+        logger.info("Estimating metrics.");
+        PaginatedScanList<RequestMetrics> metricsToWorkOn = Storage.getMetricsStore().getRequestMetricsToProcess();
         if (metricsToWorkOn == null || metricsToWorkOn.isEmpty()) {
+            logger.info("There are no metrics to process.");
             return;
         }
         for (RequestMetrics metric: metricsToWorkOn) {
             double guess = metric.getEstimatedMethods();
             double real = metric.getFinalMethods();
             double ratio = guess / real;
-            if (!(ratio >= 1+acceptableAmount || ratio <= 1-acceptableAmount)) {
-                store.storeEstimate(transformRequest(metric));
+            if (ratio >= 1+acceptableAmount || ratio <= 1-acceptableAmount) {
+                EstimateStore.getStore().storeEstimate(transformRequest(metric));
             }
             Storage.getMetricsStore().deleteMetric(metric);
 

@@ -14,6 +14,7 @@ import requests.Storage;
 import requests.exception.QueryMissingException;
 import requests.parser.QueryParser;
 import requests.parser.Request;
+import storage.estimation.EstimateStore;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -126,7 +127,7 @@ public class LoadBalancerHandler implements HttpHandler{
 
     private long estimateComplexity(Request request) {
         //TODO estimate the complexity and write to DynamoDB
-        long estimate = (request.getSceneArea()*2L + request.getImageArea()*3L) / 2L;
+        long estimate = EstimateStore.getStore().requestEstimate(request);
         Storage.getMetricsStore().storeEstimate(request, estimate);
         return estimate;
     }

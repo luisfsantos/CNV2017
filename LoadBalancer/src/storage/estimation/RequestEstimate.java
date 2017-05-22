@@ -13,7 +13,7 @@ public class RequestEstimate {
     private String modelName;
     private String imageTuple;
     private Request request;
-    private long costPerArea;
+    private double costPerArea;
     private double ratioWRROFF;
     private double ratioWCCOFF;
     private double ratioWCSC;
@@ -24,7 +24,7 @@ public class RequestEstimate {
 
     }
 
-    public RequestEstimate(Request request, long costPerArea) {
+    public RequestEstimate(Request request, double costPerArea) {
         this.modelName = request.getSceneFileName();
         this.request = request;
         this.costPerArea = costPerArea;
@@ -55,12 +55,12 @@ public class RequestEstimate {
     }
 
     @DynamoDBAttribute(attributeName = "costPerArea")
-    public long getCostPerArea() {
+    public double getCostPerArea() {
         return costPerArea;
     }
 
     @DynamoDBAttribute(attributeName = "costPerArea")
-    public void setCostPerArea(long costPerArea) {
+    public void setCostPerArea(double costPerArea) {
         this.costPerArea = costPerArea;
     }
 

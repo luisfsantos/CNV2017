@@ -1,6 +1,7 @@
 package requests.metrics;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedScanList;
 import requests.parser.Request;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class LoggerStore extends MetricsStore {
     }
 
     @Override
-    public PaginatedQueryList<RequestMetrics> getRequestMetricsToProcess() {
+    public PaginatedScanList<RequestMetrics> getRequestMetricsToProcess() {
         return null;
     }
 
