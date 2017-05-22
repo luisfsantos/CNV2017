@@ -22,6 +22,7 @@ import java.util.logging.Logger;
  * Created by lads on 17/05/2017.
  */
 public class EstimateStore {
+    private static final Integer SIMILAR_IMAGES = 10;
     AmazonDynamoDB client;
     DynamoDBMapper mapper;
     private static final double TOLERANCE = 0.1;
@@ -107,14 +108,15 @@ public class EstimateStore {
                                     " and ratioWCCOFF between :ratio_wccoff_low and :ratio_wccoff_high" +
                                     " and ratioWRSR between :ratio_wrsr_low and :ratio_wrsr_high" +
                                     " and ratioWCSC between :ratio_wcsc_low and :ratio_wcsc_high")
-                                .withExpressionAttributeValues(values));
+                                .withExpressionAttributeValues(values)
+                                .withLimit(SIMILAR_IMAGES));
                 logger.info("Got the queries back.");
                 if (estimates == null || estimates.isEmpty()) {
                     logger.info("There are no estimates for this request: " + request);
                     return 6 * request.getImageArea();
                 }
-                RequestEstimate theChosenOne = estimates.get(0); //FIXME
-                return (long)theChosenOne.getCostPerArea() * request.getImageArea();
+                double averageCostPerArea = getAverageCostPerArea(estimates);
+                return (long) (averageCostPerArea * request.getImageArea());
             } catch (Exception e) {
                 logger.warning(e.getMessage());
                 e.printStackTrace();
@@ -122,6 +124,14 @@ public class EstimateStore {
             }
 
         }
+    }
+
+    private double getAverageCostPerArea(PaginatedQueryList<RequestEstimate> estimates) {
+        double total = 0;
+        for (RequestEstimate estimate: estimates) {
+            total = total + estimate.getCostPerArea();
+        }
+        return total/estimates.size();
     }
 
     public void storeEstimate(RequestEstimate request) {
